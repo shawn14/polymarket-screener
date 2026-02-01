@@ -10,13 +10,33 @@ import { fetchActivity, fetchPositions, fetchUserStats } from './api.js';
 const DATA_DIR = './data';
 const SIGNALS_FILE = `${DATA_DIR}/signals.json`;
 const FOLLOWING_FILE = `${DATA_DIR}/following.json`;
+const EDGE_WATCHLIST_FILE = `${DATA_DIR}/edge-watchlist.json`;
 
-// Default traders to follow (top performers)
-const DEFAULT_FOLLOW = [
-  { wallet: '0x6a72f61820b26b1fe4d956e17b6dc2a1ea3033ee', name: 'kch123' },
-  { wallet: '0xd91d2cbbfa4342cf425b5f10f734eb5d4e3cda67', name: 'Theo4' },
-  { wallet: '0xb8c0c7f24ebc8f67f8e86fb8d8a16e89e2e1f63d', name: 'Fredi9999' }
-];
+// Load edge watchlist or fall back to defaults
+function getDefaultFollow() {
+  if (existsSync(EDGE_WATCHLIST_FILE)) {
+    try {
+      const edgeData = JSON.parse(readFileSync(EDGE_WATCHLIST_FILE, 'utf-8'));
+      return edgeData.traders.map(t => ({
+        wallet: t.wallet,
+        name: t.userName,
+        edgeScore: t.edgeScore,
+        isEdgeTrader: true
+      }));
+    } catch (e) {
+      console.log('Could not load edge watchlist:', e.message);
+    }
+  }
+  // Fallback defaults
+  return [
+    { wallet: '0xd91cfbfe354ea44e5396a4e20ed82d9ace2923c5', name: 'Theo4', edgeScore: 95.5, isEdgeTrader: true },
+    { wallet: '0x5a6eb53e5f5d8794832b92862dd48d4c02c7a020', name: 'Fredi9999', edgeScore: 78, isEdgeTrader: true },
+    { wallet: '0x4e02d8ef886c8b834ef1d5a9f593db47dbca5b67', name: 'PrincessCaro', edgeScore: 80.7, isEdgeTrader: true },
+    { wallet: '0x2d97d4e569a59985c1a95c8d5c42ce1f18e732f7', name: 'Michie', edgeScore: 81.6, isEdgeTrader: true }
+  ];
+}
+
+const DEFAULT_FOLLOW = getDefaultFollow();
 
 // Config
 const CONFIG = {
