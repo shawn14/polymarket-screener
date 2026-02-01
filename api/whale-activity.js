@@ -34,7 +34,12 @@ export default async function handler(req) {
       try {
         const activity = await fetchActivity(trader.proxyWallet, 5);
         
+        const sevenDaysAgo = Math.floor(Date.now() / 1000) - (7 * 24 * 60 * 60);
+        
         for (const trade of activity) {
+          // Skip old trades (older than 7 days)
+          if (trade.timestamp < sevenDaysAgo) continue;
+          
           const size = Math.abs(trade.usdcSize || trade.size || 0);
           if (size < 1000) continue; // Skip small trades
           
@@ -54,8 +59,8 @@ export default async function handler(req) {
       }
     }
     
-    // Sort by timestamp
-    allActivity.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    // Sort by timestamp (timestamps are in seconds)
+    allActivity.sort((a, b) => b.timestamp - a.timestamp);
     
     return new Response(JSON.stringify(allActivity.slice(0, 50)), {
       headers: { 
