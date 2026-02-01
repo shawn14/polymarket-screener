@@ -45,8 +45,9 @@ function saveActivity(activity) {
   writeFileSync(ACTIVITY_FILE, JSON.stringify(trimmed, null, 2));
 }
 
-async function sendAlert(message, trade) {
-  console.log(`🐋 ALERT: ${message}`);
+async function sendAlert(message, trade, isCopyCandidate = false) {
+  const emoji = isCopyCandidate ? '🎯' : '🐋';
+  console.log(`${emoji} ALERT: ${message}`);
   if (trade) {
     console.log(`   Trader: ${trade.userName} | ${trade.side} ${trade.outcome} | $${trade.size?.toLocaleString()}`);
   }
@@ -54,8 +55,8 @@ async function sendAlert(message, trade) {
   if (CONFIG.telegramToken && CONFIG.telegramChat) {
     try {
       const text = trade 
-        ? `🐋 *Whale Alert*\n\n*${trade.userName}* ${trade.side} ${trade.outcome}\nSize: $${trade.size?.toLocaleString()}\nMarket: ${trade.market}\n\n[View Profile](https://polymarket.com/profile/${trade.wallet})`
-        : `🐋 ${message}`;
+        ? `${emoji} *${isCopyCandidate ? 'Copy Signal' : 'Whale Alert'}*\n\n*${trade.userName}* ${trade.side} *${trade.outcome}*\n💰 Size: $${trade.size?.toLocaleString()}\n📊 Market: ${trade.market}\n${isCopyCandidate ? `\n✨ _This trader has 70%+ win rate & 30%+ efficiency_` : ''}\n\n[View Profile](https://polymarket.com/profile/${trade.wallet})`
+        : `${emoji} ${message}`;
       
       await fetch(`https://api.telegram.org/bot${CONFIG.telegramToken}/sendMessage`, {
         method: 'POST',
@@ -73,8 +74,16 @@ async function sendAlert(message, trade) {
   }
 }
 
+async function fetchClosedPositions(wallet) {
+  const params = new URLSearchParams({
+    user: wallet, sortBy: 'realizedpnl', sortDirection: 'DESC', limit: '50'
+  });
+  const res = await fetch(`https://data-api.polymarket.com/closed-positions?${params}`);
+  return res.json();
+}
+
 async function updateWatchlist(state) {
-  console.log('Updating watchlist with edge detection...');
+  console.log('Updating watchlist with copy candidate detection...');
   
   // Get top by PnL across time periods
   const [allTime, monthly, weekly] = await Promise.all([
@@ -92,17 +101,50 @@ async function updateWatchlist(state) {
         userName: t.userName,
         pnl: t.pnl,
         volume: t.vol,
-        efficiency: t.pnl / (t.vol || 1)
+        efficiency: t.pnl / (t.vol || 1),
+        isCopyCandidate: false
       });
     }
   }
   
-  // Sort by efficiency (edge proxy) and take top N
-  state.watchlist = Array.from(traderMap.values())
+  // Check which are copy candidates (15+ trades, 70%+ win rate, 30%+ efficiency)
+  console.log('Checking for copy candidates...');
+  const topTraders = Array.from(traderMap.values())
     .sort((a, b) => b.efficiency - a.efficiency)
+    .slice(0, 40);
+  
+  for (const trader of topTraders) {
+    try {
+      const closed = await fetchClosedPositions(trader.wallet);
+      const wins = closed.filter(p => p.realizedPnl > 0).length;
+      const losses = closed.filter(p => p.realizedPnl < 0).length;
+      const totalTrades = wins + losses;
+      const winRate = totalTrades > 0 ? wins / totalTrades : 0;
+      
+      // Copy candidate criteria: 15+ trades, 70%+ win rate, 30%+ efficiency
+      if (totalTrades >= 15 && winRate >= 0.70 && trader.efficiency >= 0.30) {
+        trader.isCopyCandidate = true;
+        trader.winRate = winRate;
+        trader.totalTrades = totalTrades;
+        console.log(`  ✓ ${trader.userName} is a COPY CANDIDATE (${totalTrades} trades, ${(winRate*100).toFixed(0)}% win rate)`);
+      }
+      
+      await new Promise(r => setTimeout(r, 100));
+    } catch (err) {}
+  }
+  
+  // Sort by efficiency and take top N, prioritizing copy candidates
+  state.watchlist = Array.from(traderMap.values())
+    .sort((a, b) => {
+      if (a.isCopyCandidate && !b.isCopyCandidate) return -1;
+      if (!a.isCopyCandidate && b.isCopyCandidate) return 1;
+      return b.efficiency - a.efficiency;
+    })
     .slice(0, CONFIG.watchCount);
   
-  console.log(`Watching ${state.watchlist.length} high-edge traders`);
+  const copyCandidates = state.watchlist.filter(t => t.isCopyCandidate);
+  console.log(`Watching ${state.watchlist.length} traders (${copyCandidates.length} copy candidates)`);
+  state.copyCandidates = copyCandidates.map(t => t.wallet);
   saveState(state);
 }
 
@@ -158,12 +200,21 @@ async function runOnce() {
   
   let newTradesCount = 0;
   
+  const copyCandidates = state.copyCandidates || [];
+  
   for (const trader of state.watchlist) {
     const newTrades = await checkTraderActivity(trader, state);
+    const isCopyCandidate = copyCandidates.includes(trader.wallet);
+    
     for (const trade of newTrades) {
       newTradesCount++;
+      trade.isCopyCandidate = isCopyCandidate;
       allActivity.unshift(trade);
-      await sendAlert(`${trader.userName} made a $${trade.size.toLocaleString()} trade`, trade);
+      await sendAlert(
+        `${trader.userName} made a $${trade.size.toLocaleString()} trade`, 
+        trade,
+        isCopyCandidate
+      );
     }
     await new Promise(r => setTimeout(r, 200));
   }

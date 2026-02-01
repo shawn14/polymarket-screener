@@ -3,231 +3,352 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Polymarket Screener</title>
+  <title>POLYMARKET SCREENER</title>
   <style>
     :root {
-      --bg: #0d1117;
-      --bg-secondary: #161b22;
-      --border: #30363d;
-      --text: #e6edf3;
-      --text-muted: #7d8590;
-      --green: #3fb950;
-      --red: #f85149;
-      --blue: #58a6ff;
-      --yellow: #d29922;
+      --bg: #000000;
+      --bg-panel: #1a1a1a;
+      --bg-header: #0a0a0a;
+      --border: #333333;
+      --text: #ffffff;
+      --text-dim: #888888;
+      --text-muted: #666666;
+      --orange: #ff6600;
+      --orange-dim: #cc5500;
+      --green: #00ff00;
+      --red: #ff3333;
+      --blue: #3399ff;
+      --yellow: #ffcc00;
     }
     
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', monospace;
       background: var(--bg);
       color: var(--text);
-      line-height: 1.5;
+      line-height: 1.4;
+      font-size: 13px;
     }
     
+    /* Bloomberg-style header */
     header {
-      background: var(--bg-secondary);
-      border-bottom: 1px solid var(--border);
-      padding: 1rem 2rem;
+      background: var(--bg-header);
+      border-bottom: 2px solid var(--orange);
+      padding: 0.5rem 1rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
     
-    header h1 {
-      font-size: 1.5rem;
-      font-weight: 600;
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
     }
     
-    header h1 span { color: var(--blue); }
-    
-    .refresh-btn {
-      background: var(--blue);
-      color: white;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.875rem;
+    .logo-box {
+      background: var(--orange);
+      color: black;
+      padding: 0.25rem 0.5rem;
+      font-weight: bold;
+      font-size: 14px;
+      letter-spacing: 1px;
     }
     
-    .refresh-btn:hover { opacity: 0.9; }
-    
-    main {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 2rem;
+    .logo-text {
+      color: var(--text);
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
     }
     
-    .tabs {
+    .header-stats {
+      display: flex;
+      gap: 2rem;
+      font-size: 11px;
+    }
+    
+    .header-stat {
       display: flex;
       gap: 0.5rem;
-      margin-bottom: 1.5rem;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 0.5rem;
     }
     
-    .tab {
-      background: transparent;
+    .header-stat label {
       color: var(--text-muted);
-      border: none;
-      padding: 0.5rem 1rem;
+    }
+    
+    .header-stat .value {
+      color: var(--orange);
+      font-weight: bold;
+    }
+    
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .btn {
+      background: var(--bg-panel);
+      color: var(--orange);
+      border: 1px solid var(--orange);
+      padding: 0.35rem 0.75rem;
+      font-family: inherit;
+      font-size: 11px;
       cursor: pointer;
-      font-size: 0.875rem;
-      border-radius: 6px;
-    }
-    
-    .tab:hover { color: var(--text); }
-    .tab.active { background: var(--bg-secondary); color: var(--text); }
-    
-    .panel { display: none; }
-    .panel.active { display: block; }
-    
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-    
-    .stat-card {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1rem;
-    }
-    
-    .stat-card label {
-      color: var(--text-muted);
-      font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
     
-    .stat-card .value {
-      font-size: 1.5rem;
-      font-weight: 600;
-      margin-top: 0.25rem;
+    .btn:hover {
+      background: var(--orange);
+      color: black;
     }
     
-    .stat-card .value.positive { color: var(--green); }
-    .stat-card .value.negative { color: var(--red); }
+    /* Main layout */
+    main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr auto;
+      gap: 2px;
+      height: calc(100vh - 50px);
+      padding: 2px;
+      background: var(--border);
+    }
     
+    /* Screener takes 60% height */
+    .panel.full {
+      grid-column: span 2;
+      max-height: 60vh;
+    }
+    
+    /* Panel styling */
+    .panel {
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    .panel-header {
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      padding: 0.5rem 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .panel-title {
+      color: var(--orange);
+      font-size: 11px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    
+    .panel-subtitle {
+      color: var(--text-muted);
+      font-size: 10px;
+    }
+    
+    .panel-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+    
+    /* Table styling */
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.875rem;
-    }
-    
-    th, td {
-      text-align: left;
-      padding: 0.75rem 1rem;
-      border-bottom: 1px solid var(--border);
+      font-size: 12px;
     }
     
     th {
-      background: var(--bg-secondary);
-      color: var(--text-muted);
-      font-weight: 500;
+      text-align: left;
+      padding: 0.4rem 0.5rem;
+      background: var(--bg-panel);
+      color: var(--orange);
+      font-weight: normal;
+      font-size: 10px;
       text-transform: uppercase;
-      font-size: 0.75rem;
       letter-spacing: 0.5px;
-      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
     }
     
-    th:hover { color: var(--text); }
+    td {
+      padding: 0.35rem 0.5rem;
+      border-bottom: 1px solid #222;
+    }
     
-    tr:hover td { background: var(--bg-secondary); }
+    tr:hover td {
+      background: var(--bg-panel);
+    }
+    
+    .col-rank { width: 40px; color: var(--text-muted); }
+    .col-name { }
+    .col-num { text-align: right; font-variant-numeric: tabular-nums; }
     
     .positive { color: var(--green); }
     .negative { color: var(--red); }
+    .highlight { color: var(--orange); }
+    .dim { color: var(--text-muted); }
     
     .trader-link {
-      color: var(--blue);
+      color: var(--text);
       text-decoration: none;
     }
     
-    .trader-link:hover { text-decoration: underline; }
-    
-    .badge {
-      display: inline-block;
-      padding: 0.125rem 0.5rem;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 500;
+    .trader-link:hover {
+      color: var(--orange);
     }
     
-    .badge.high { background: rgba(63, 185, 80, 0.2); color: var(--green); }
-    .badge.medium { background: rgba(210, 153, 34, 0.2); color: var(--yellow); }
-    .badge.low { background: rgba(139, 148, 158, 0.2); color: var(--text-muted); }
+    /* Edge score bar */
+    .edge-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
     
-    .signal-card {
-      background: var(--bg-secondary);
+    .edge-bar-fill {
+      height: 4px;
+      background: var(--orange);
+      border-radius: 2px;
+    }
+    
+    .edge-bar-track {
+      flex: 1;
+      height: 4px;
+      background: var(--bg-panel);
+      border-radius: 2px;
+      max-width: 60px;
+    }
+    
+    /* Activity feed */
+    .activity-item {
+      padding: 0.5rem;
+      border-bottom: 1px solid #222;
+      display: grid;
+      grid-template-columns: 60px 1fr auto;
+      gap: 0.75rem;
+      align-items: start;
+    }
+    
+    .activity-item:hover {
+      background: var(--bg-panel);
+    }
+    
+    .activity-time {
+      color: var(--text-muted);
+      font-size: 10px;
+    }
+    
+    .activity-main {
+      min-width: 0;
+    }
+    
+    .activity-trader {
+      color: var(--orange);
+    }
+    
+    .activity-market {
+      color: var(--text-dim);
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .activity-size {
+      text-align: right;
+      font-weight: bold;
+    }
+    
+    /* Signal cards */
+    .signal-item {
+      background: var(--bg-panel);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1rem;
-      margin-bottom: 1rem;
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
     }
     
     .signal-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
       margin-bottom: 0.5rem;
     }
     
     .signal-market {
-      font-weight: 600;
+      color: var(--text);
+      font-weight: bold;
     }
+    
+    .signal-confidence {
+      padding: 0.15rem 0.4rem;
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+    
+    .signal-confidence.high { background: var(--green); color: black; }
+    .signal-confidence.medium { background: var(--yellow); color: black; }
+    .signal-confidence.low { background: var(--text-muted); color: black; }
     
     .signal-details {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
       margin-top: 0.5rem;
       padding-top: 0.5rem;
       border-top: 1px solid var(--border);
     }
     
     .signal-detail label {
+      display: block;
       color: var(--text-muted);
-      font-size: 0.75rem;
+      font-size: 9px;
+      text-transform: uppercase;
+      margin-bottom: 0.15rem;
     }
     
-    .whale-activity {
-      max-height: 500px;
-      overflow-y: auto;
-    }
-    
-    .activity-item {
+    /* Tabs */
+    .tabs {
       display: flex;
-      gap: 1rem;
-      padding: 0.75rem;
-      border-bottom: 1px solid var(--border);
+      gap: 1px;
+      background: var(--border);
+      padding: 1px;
     }
     
-    .activity-time {
+    .tab {
+      background: var(--bg-panel);
       color: var(--text-muted);
-      font-size: 0.75rem;
-      min-width: 80px;
+      border: none;
+      padding: 0.4rem 0.75rem;
+      font-family: inherit;
+      font-size: 10px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     
-    .activity-content { flex: 1; }
-    
-    .activity-trader {
-      color: var(--blue);
-      font-weight: 500;
+    .tab:hover {
+      color: var(--text);
     }
     
-    .activity-size {
-      font-weight: 600;
+    .tab.active {
+      background: var(--bg);
+      color: var(--orange);
     }
     
+    /* Filters */
     .filters {
       display: flex;
       gap: 1rem;
-      margin-bottom: 1rem;
+      padding: 0.5rem;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
     }
     
     .filter-group {
@@ -238,125 +359,352 @@
     
     .filter-group label {
       color: var(--text-muted);
-      font-size: 0.75rem;
+      font-size: 10px;
+      text-transform: uppercase;
     }
     
-    select, input {
-      background: var(--bg-secondary);
+    select {
+      background: var(--bg);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 0.5rem;
-      border-radius: 4px;
-      font-size: 0.875rem;
+      padding: 0.3rem 0.5rem;
+      font-family: inherit;
+      font-size: 11px;
     }
     
-    .loading {
-      text-align: center;
-      padding: 2rem;
-      color: var(--text-muted);
+    select:focus {
+      outline: 1px solid var(--orange);
     }
     
-    .empty {
+    /* Positions list */
+    .positions {
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border);
+    }
+    
+    .positions-title {
+      color: var(--text-muted);
+      font-size: 9px;
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+    }
+    
+    .position-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.2rem 0;
+      font-size: 11px;
+    }
+    
+    .position-market {
+      color: var(--text-dim);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 200px;
+    }
+    
+    /* Edge trader card */
+    .edge-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .edge-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    
+    .edge-rank {
+      color: var(--text-muted);
+      margin-right: 0.5rem;
+    }
+    
+    .edge-score {
+      background: var(--orange);
+      color: black;
+      padding: 0.15rem 0.4rem;
+      font-size: 10px;
+      font-weight: bold;
+    }
+    
+    .edge-stats {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.5rem;
+    }
+    
+    .edge-stat label {
+      display: block;
+      color: var(--text-muted);
+      font-size: 9px;
+      text-transform: uppercase;
+    }
+    
+    .edge-stat .value {
+      font-weight: bold;
+    }
+    
+    /* Loading state */
+    .loading, .empty {
+      color: var(--text-muted);
       text-align: center;
       padding: 2rem;
-      color: var(--text-muted);
+      font-size: 11px;
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+    
+    /* Ticker animation */
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0.3; }
+    }
+    
+    .live-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      margin-right: 0.5rem;
+      animation: blink 1s infinite;
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      body {
+        font-size: 11px;
+      }
+      
+      header {
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0.5rem;
+      }
+      
+      .logo-text {
+        display: none;
+      }
+      
+      .header-stats {
+        gap: 1rem;
+        font-size: 10px;
+      }
+      
+      main {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        min-height: calc(100vh - 80px);
+      }
+      
+      .panel {
+        min-height: 300px;
+      }
+      
+      .panel.full {
+        max-height: none;
+        min-height: 50vh;
+      }
+      
+      .panel-content {
+        overflow-x: auto;
+      }
+      
+      /* Scrollable table wrapper */
+      table {
+        min-width: 800px;
+        font-size: 11px;
+      }
+      
+      th, td {
+        padding: 0.4rem;
+        white-space: nowrap;
+      }
+      
+      .col-rank {
+        width: 30px;
+      }
+      
+      /* Activity feed mobile */
+      .activity-item {
+        grid-template-columns: 40px 1fr auto;
+        gap: 0.5rem;
+        padding: 0.4rem;
+      }
+      
+      .activity-time {
+        font-size: 9px;
+      }
+      
+      .activity-market {
+        font-size: 10px;
+      }
+      
+      /* Signal cards mobile */
+      .signal-details {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .signal-market {
+        font-size: 11px;
+      }
+      
+      /* Filters */
+      .panel-header {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
+      }
+      
+      .filters {
+        width: 100%;
+        justify-content: flex-start;
+      }
+      
+      select {
+        font-size: 12px;
+        padding: 0.4rem;
+      }
+    }
+    
+    /* Extra small screens */
+    @media (max-width: 480px) {
+      .header-stats {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      
+      .header-stat label {
+        display: none;
+      }
+      
+      table {
+        min-width: 600px;
+        font-size: 10px;
+      }
+      
+      th, td {
+        padding: 0.3rem;
+      }
+      
+      /* Hide less important columns on very small screens */
+      .hide-mobile {
+        display: none;
+      }
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>📊 Polymarket <span>Screener</span></h1>
-    <button class="refresh-btn" onclick="refreshData()">↻ Refresh</button>
+    <div class="logo">
+      <div class="logo-box">PM</div>
+      <div class="logo-text">Polymarket Screener</div>
+    </div>
+    <div class="header-stats">
+      <div class="header-stat">
+        <label>TOP 20 PNL</label>
+        <span class="value" id="header-pnl">-</span>
+      </div>
+      <div class="header-stat">
+        <label>TODAY</label>
+        <span class="value" id="header-today">-</span>
+      </div>
+      <div class="header-stat">
+        <label>UPDATED</label>
+        <span class="value" id="header-updated">-</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn" onclick="refreshData()">REFRESH</button>
+    </div>
   </header>
   
   <main>
-    <div class="tabs">
-      <button class="tab active" data-tab="leaderboard">Leaderboard</button>
-      <button class="tab" data-tab="edge">🎯 Edge Traders</button>
-      <button class="tab" data-tab="signals">Copy Signals</button>
-      <button class="tab" data-tab="whales">Whale Activity</button>
-      <button class="tab" data-tab="efficiency">Efficiency</button>
-    </div>
-    
-    <div id="leaderboard" class="panel active">
-      <div class="stats-grid" id="summary-stats"></div>
-      
-      <div class="filters">
-        <div class="filter-group">
-          <label>Period:</label>
+    <!-- Main Screener Panel - Full Width -->
+    <div class="panel full">
+      <div class="panel-header">
+        <span class="panel-title">📊 Trader Screener</span>
+        <div class="filters" style="background: transparent; padding: 0; border: none;">
           <select id="period-filter" onchange="renderLeaderboard()">
-            <option value="day">Today</option>
-            <option value="week">This Week</option>
-            <option value="month">This Month</option>
-            <option value="all" selected>All Time</option>
+            <option value="all">ALL TIME</option>
+            <option value="month">MONTH</option>
+            <option value="week">WEEK</option>
+            <option value="day">TODAY</option>
           </select>
-        </div>
-        <div class="filter-group">
-          <label>Sort:</label>
           <select id="sort-filter" onchange="renderLeaderboard()">
-            <option value="pnl">Profit/Loss</option>
-            <option value="vol">Volume</option>
+            <option value="pnl">BY PNL</option>
+            <option value="vol">BY VOLUME</option>
+            <option value="efficiency">BY EFFICIENCY</option>
+            <option value="winrate">BY WIN RATE</option>
+            <option value="edge">BY EDGE SCORE</option>
           </select>
         </div>
       </div>
-      
-      <table id="leaderboard-table">
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Trader</th>
-            <th>PnL</th>
-            <th>Volume</th>
-            <th>Win Rate</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <div class="panel-content">
+        <table id="leaderboard-table">
+          <thead>
+            <tr>
+              <th class="col-rank">#</th>
+              <th>Trader</th>
+              <th class="col-num">PnL</th>
+              <th class="col-num">Volume</th>
+              <th class="col-num">Eff%</th>
+              <th class="col-num">Win%</th>
+              <th class="col-num hide-mobile">Trades</th>
+              <th class="col-num hide-mobile">Avg W</th>
+              <th class="col-num hide-mobile">Avg L</th>
+              <th class="col-num">PF</th>
+              <th class="col-num">Edge</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
     
-    <div id="edge" class="panel">
-      <h2 style="margin-bottom: 1rem;">🎯 Edge Traders</h2>
-      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
-        Traders ranked by edge score — combining efficiency, win rate, profit factor, and consistency. Click to see their current positions.
-      </p>
-      <div id="edge-list" class="loading">Loading edge traders...</div>
+    <!-- Whale Activity Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title"><span class="live-dot"></span>🐋 Whale Activity</span>
+        <span class="panel-subtitle">Live feed</span>
+      </div>
+      <div class="panel-content" id="whale-list">
+        <div class="loading">Waiting for activity...</div>
+      </div>
     </div>
     
-    <div id="signals" class="panel">
-      <h2 style="margin-bottom: 1rem;">📡 Copy Trading Signals</h2>
-      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
-        Signals generated when top traders take positions. Higher confidence = more traders agree.
-      </p>
-      <div id="signals-list" class="loading">Loading signals...</div>
-    </div>
-    
-    <div id="whales" class="panel">
-      <h2 style="margin-bottom: 1rem;">🐋 Whale Activity</h2>
-      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
-        Recent trades from top traders. Run <code>npm run whales</code> to start monitoring.
-      </p>
-      <div id="whale-list" class="whale-activity loading">Loading activity...</div>
-    </div>
-    
-    <div id="efficiency" class="panel">
-      <h2 style="margin-bottom: 1rem;">⚡ Efficiency Leaders</h2>
-      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
-        Traders ranked by PnL per dollar traded - finding the best edge.
-      </p>
-      <table id="efficiency-table">
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Trader</th>
-            <th>Efficiency</th>
-            <th>Win Rate</th>
-            <th>Trades</th>
-            <th>Avg Win</th>
-            <th>Avg Loss</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+    <!-- Copy Signals Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">📡 Copy Signals</span>
+        <span class="panel-subtitle">Consensus positions</span>
+      </div>
+      <div class="panel-content" id="signals-list">
+        <div class="loading">Loading...</div>
+      </div>
     </div>
   </main>
   
@@ -369,20 +717,17 @@
       edgeTraders: null
     };
     
-    // Tab switching
-    document.querySelectorAll('.tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-        tab.classList.add('active');
-        document.getElementById(tab.dataset.tab).classList.add('active');
-      });
-    });
-    
-    function formatMoney(n) {
+    function formatMoney(n, compact = false) {
       if (n == null) return '-';
-      const sign = n >= 0 ? '+' : '';
-      return sign + '$' + Math.abs(n).toLocaleString('en-US', { maximumFractionDigits: 0 });
+      const abs = Math.abs(n);
+      const sign = n >= 0 ? '+' : '-';
+      if (compact && abs >= 1000000) {
+        return sign + '$' + (abs / 1000000).toFixed(1) + 'M';
+      }
+      if (compact && abs >= 1000) {
+        return sign + '$' + (abs / 1000).toFixed(0) + 'K';
+      }
+      return sign + '$' + abs.toLocaleString('en-US', { maximumFractionDigits: 0 });
     }
     
     function formatPct(n) {
@@ -392,10 +737,10 @@
     
     function timeAgo(timestamp) {
       const seconds = Math.floor((Date.now() - new Date(timestamp)) / 1000);
-      if (seconds < 60) return 'just now';
-      if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
-      if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
-      return Math.floor(seconds / 86400) + 'd ago';
+      if (seconds < 60) return seconds + 's';
+      if (seconds < 3600) return Math.floor(seconds / 60) + 'm';
+      if (seconds < 86400) return Math.floor(seconds / 3600) + 'h';
+      return Math.floor(seconds / 86400) + 'd';
     }
     
     async function fetchData() {
@@ -415,38 +760,21 @@
       }
     }
     
-    function renderSummaryStats() {
-      const container = document.getElementById('summary-stats');
-      if (!data.leaderboard) {
-        container.innerHTML = '<div class="loading">No data - run npm run fetch</div>';
-        return;
-      }
+    function renderHeader() {
+      if (!data.leaderboard) return;
       
       const allPnl = data.leaderboard.all?.byPnl || [];
       const dayPnl = data.leaderboard.day?.byPnl || [];
       
       const totalPnl = allPnl.slice(0, 20).reduce((s, t) => s + (t.pnl || 0), 0);
       const todayPnl = dayPnl.slice(0, 20).reduce((s, t) => s + (t.pnl || 0), 0);
-      const topTrader = allPnl[0];
       
-      container.innerHTML = `
-        <div class="stat-card">
-          <label>Top 20 All-Time PnL</label>
-          <div class="value positive">${formatMoney(totalPnl)}</div>
-        </div>
-        <div class="stat-card">
-          <label>Top 20 Today's PnL</label>
-          <div class="value ${todayPnl >= 0 ? 'positive' : 'negative'}">${formatMoney(todayPnl)}</div>
-        </div>
-        <div class="stat-card">
-          <label>#1 All-Time</label>
-          <div class="value">${topTrader?.userName || '-'}</div>
-        </div>
-        <div class="stat-card">
-          <label>Data Updated</label>
-          <div class="value" style="font-size: 1rem;">${data.leaderboard.all?.fetchedAt ? timeAgo(data.leaderboard.all.fetchedAt) : '-'}</div>
-        </div>
-      `;
+      document.getElementById('header-pnl').textContent = formatMoney(totalPnl, true);
+      document.getElementById('header-today').textContent = formatMoney(todayPnl, true);
+      document.getElementById('header-today').className = 'value ' + (todayPnl >= 0 ? 'positive' : 'negative');
+      document.getElementById('header-updated').textContent = data.leaderboard.all?.fetchedAt 
+        ? timeAgo(data.leaderboard.all.fetchedAt) + ' ago'
+        : '-';
     }
     
     function renderLeaderboard() {
@@ -455,65 +783,131 @@
       const sort = document.getElementById('sort-filter').value;
       
       if (!data.leaderboard || !data.leaderboard[period]) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty">No data available</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" class="empty">No data</td></tr>';
         return;
       }
       
-      const traders = sort === 'pnl' 
-        ? data.leaderboard[period].byPnl 
-        : data.leaderboard[period].byVolume;
-      
-      tbody.innerHTML = traders.slice(0, 50).map(t => {
+      // Merge leaderboard with detailed stats and edge data
+      let traders = data.leaderboard[period].byPnl.map(t => {
         const detail = data.detailed?.find(d => d.proxyWallet === t.proxyWallet);
+        const edge = data.edgeTraders?.traders?.find(e => e.wallet === t.proxyWallet);
+        return {
+          ...t,
+          ...detail,
+          edgeScore: edge?.edgeScore || null,
+          efficiency: t.vol > 0 ? (t.pnl / t.vol) : 0,
+          stats: edge?.stats || detail || {}
+        };
+      });
+      
+      // Sort based on selection
+      switch(sort) {
+        case 'vol':
+          traders.sort((a, b) => (b.vol || 0) - (a.vol || 0));
+          break;
+        case 'efficiency':
+          traders.sort((a, b) => b.efficiency - a.efficiency);
+          break;
+        case 'winrate':
+          traders.sort((a, b) => (b.winRate || 0) - (a.winRate || 0));
+          break;
+        case 'edge':
+          traders.sort((a, b) => (b.edgeScore || 0) - (a.edgeScore || 0));
+          break;
+        default:
+          traders.sort((a, b) => (b.pnl || 0) - (a.pnl || 0));
+      }
+      
+      tbody.innerHTML = traders.slice(0, 50).map((t, i) => {
+        const eff = t.efficiency * 100;
+        const wr = t.winRate ? t.winRate * 100 : (t.stats?.winRate || null);
+        const trades = t.totalTrades || t.stats?.totalTrades || '-';
+        const avgWin = t.avgWin || t.stats?.avgWin || null;
+        const avgLoss = t.avgLoss || t.stats?.avgLoss || null;
+        const pf = t.profitFactor || t.stats?.profitFactor || null;
+        
         return `
           <tr>
-            <td>#${t.rank}</td>
+            <td class="col-rank">${i + 1}</td>
             <td>
               <a class="trader-link" href="https://polymarket.com/profile/${t.proxyWallet}" target="_blank">
                 ${t.userName}
               </a>
             </td>
-            <td class="${t.pnl >= 0 ? 'positive' : 'negative'}">${formatMoney(t.pnl)}</td>
-            <td>${formatMoney(t.vol)}</td>
-            <td>${formatPct(detail?.winRate)}</td>
+            <td class="col-num ${t.pnl >= 0 ? 'positive' : 'negative'}">${formatMoney(t.pnl, true)}</td>
+            <td class="col-num dim">${formatMoney(t.vol, true)}</td>
+            <td class="col-num ${eff > 20 ? 'positive' : eff > 0 ? '' : 'negative'}">${eff.toFixed(1)}%</td>
+            <td class="col-num ${wr > 60 ? 'positive' : ''}">${wr ? wr.toFixed(1) + '%' : '-'}</td>
+            <td class="col-num hide-mobile">${trades}</td>
+            <td class="col-num hide-mobile positive">${avgWin ? formatMoney(avgWin, true) : '-'}</td>
+            <td class="col-num hide-mobile negative">${avgLoss ? formatMoney(avgLoss, true) : '-'}</td>
+            <td class="col-num ${pf > 2 ? 'positive' : ''}">${pf ? pf.toFixed(1) + 'x' : '-'}</td>
+            <td class="col-num highlight">${t.edgeScore || '-'}</td>
           </tr>
         `;
       }).join('');
     }
     
-    function renderSignals() {
-      const container = document.getElementById('signals-list');
+    function renderEdgeTraders() {
+      // Edge data now merged into main screener table
+    }
+    
+    function renderWhaleActivity() {
+      const container = document.getElementById('whale-list');
       
-      if (!data.signals || data.signals.length === 0) {
-        container.innerHTML = '<div class="empty">No signals yet. Run <code>npm run copy</code> to generate signals.</div>';
-        container.classList.remove('loading');
+      if (!data.whaleActivity?.length) {
+        container.innerHTML = '<div class="empty">Run npm run whales:daemon</div>';
         return;
       }
       
-      container.innerHTML = data.signals.slice(0, 20).map(s => {
-        const confidence = s.confidence >= 0.8 ? 'high' : s.confidence >= 0.6 ? 'medium' : 'low';
+      container.innerHTML = data.whaleActivity.slice(0, 30).map(a => `
+        <div class="activity-item">
+          <div class="activity-time">${timeAgo(a.timestamp)}</div>
+          <div class="activity-main">
+            <span class="activity-trader">${a.userName}</span>
+            <span class="${a.side === 'BUY' ? 'positive' : 'negative'}">${a.side}</span>
+            ${a.outcome}
+            <div class="activity-market">${a.market}</div>
+          </div>
+          <div class="activity-size ${a.side === 'BUY' ? 'positive' : 'negative'}">
+            ${formatMoney(a.size, true)}
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    function renderSignals() {
+      const container = document.getElementById('signals-list');
+      
+      if (!data.signals?.length) {
+        container.innerHTML = '<div class="empty">Run npm run copy</div>';
+        return;
+      }
+      
+      container.innerHTML = data.signals.slice(0, 10).map(s => {
+        const conf = s.confidence >= 0.8 ? 'high' : s.confidence >= 0.6 ? 'medium' : 'low';
         return `
-          <div class="signal-card">
+          <div class="signal-item">
             <div class="signal-header">
-              <span class="signal-market">${s.market}</span>
-              <span class="badge ${confidence}">${(s.confidence * 100).toFixed(0)}% confidence</span>
+              <span class="signal-market">${s.market?.slice(0, 40)}${s.market?.length > 40 ? '...' : ''}</span>
+              <span class="signal-confidence ${conf}">${(s.confidence * 100).toFixed(0)}%</span>
             </div>
             <div>
-              <strong class="${s.side === 'LONG' ? 'positive' : 'negative'}">${s.side}</strong> 
+              <strong class="${s.side === 'LONG' ? 'positive' : 'negative'}">${s.side}</strong>
               ${s.outcome}
             </div>
             <div class="signal-details">
               <div class="signal-detail">
-                <label>Total Size</label>
-                <div>${formatMoney(s.totalSize)}</div>
+                <label>Size</label>
+                <div>${formatMoney(s.totalSize, true)}</div>
               </div>
               <div class="signal-detail">
-                <label>Avg Price</label>
+                <label>Price</label>
                 <div>${(s.avgPrice * 100).toFixed(1)}¢</div>
               </div>
               <div class="signal-detail">
                 <label>Traders</label>
-                <div>${s.traders.map(t => t.name).join(', ')}</div>
+                <div>${s.traders?.length || 0}</div>
               </div>
               <div class="signal-detail">
                 <label>Time</label>
@@ -523,133 +917,14 @@
           </div>
         `;
       }).join('');
-      container.classList.remove('loading');
-    }
-    
-    function renderWhaleActivity() {
-      const container = document.getElementById('whale-list');
-      
-      if (!data.whaleActivity || data.whaleActivity.length === 0) {
-        container.innerHTML = '<div class="empty">No whale activity yet. Run <code>npm run whales</code> to start monitoring.</div>';
-        container.classList.remove('loading');
-        return;
-      }
-      
-      container.innerHTML = data.whaleActivity.slice(0, 50).map(a => `
-        <div class="activity-item">
-          <div class="activity-time">${timeAgo(a.timestamp)}</div>
-          <div class="activity-content">
-            <a class="activity-trader trader-link" href="https://polymarket.com/profile/${a.wallet}" target="_blank">
-              ${a.userName}
-            </a>
-            <span class="${a.side === 'BUY' ? 'positive' : 'negative'}">${a.side}</span>
-            ${a.outcome}
-            <span class="activity-size">${formatMoney(a.size)}</span>
-            <div style="color: var(--text-muted); font-size: 0.75rem;">${a.market}</div>
-          </div>
-        </div>
-      `).join('');
-      container.classList.remove('loading');
-    }
-    
-    function renderEfficiency() {
-      const tbody = document.querySelector('#efficiency-table tbody');
-      
-      if (!data.detailed || data.detailed.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty">No detailed data available</td></tr>';
-        return;
-      }
-      
-      const withEfficiency = data.detailed
-        .filter(t => t.vol > 10000)
-        .map(t => ({ ...t, efficiency: t.pnl / t.vol }))
-        .sort((a, b) => b.efficiency - a.efficiency)
-        .slice(0, 30);
-      
-      tbody.innerHTML = withEfficiency.map((t, i) => `
-        <tr>
-          <td>#${i + 1}</td>
-          <td>
-            <a class="trader-link" href="https://polymarket.com/profile/${t.proxyWallet}" target="_blank">
-              ${t.userName}
-            </a>
-          </td>
-          <td class="positive">${formatPct(t.efficiency)}</td>
-          <td>${formatPct(t.winRate)}</td>
-          <td>${t.totalTrades || '-'}</td>
-          <td class="positive">${formatMoney(t.avgWin)}</td>
-          <td class="negative">${formatMoney(t.avgLoss)}</td>
-        </tr>
-      `).join('');
-    }
-    
-    function renderEdgeTraders() {
-      const container = document.getElementById('edge-list');
-      
-      if (!data.edgeTraders || !data.edgeTraders.traders || data.edgeTraders.traders.length === 0) {
-        container.innerHTML = '<div class="empty">Loading edge data...</div>';
-        container.classList.remove('loading');
-        return;
-      }
-      
-      container.innerHTML = data.edgeTraders.traders.map((t, i) => `
-        <div class="signal-card">
-          <div class="signal-header">
-            <span>
-              <strong>#${i + 1}</strong>
-              <a class="trader-link" href="https://polymarket.com/profile/${t.wallet}" target="_blank">
-                ${t.userName}
-              </a>
-            </span>
-            <span class="badge high">Edge: ${t.edgeScore}</span>
-          </div>
-          <div class="signal-details" style="margin-top: 0.75rem;">
-            <div class="signal-detail">
-              <label>PnL</label>
-              <div class="positive">${formatMoney(t.pnl)}</div>
-            </div>
-            <div class="signal-detail">
-              <label>Efficiency</label>
-              <div>${t.efficiency}%</div>
-            </div>
-            <div class="signal-detail">
-              <label>Win Rate</label>
-              <div>${t.winRate}%</div>
-            </div>
-            <div class="signal-detail">
-              <label>Profit Factor</label>
-              <div>${t.profitFactor}x</div>
-            </div>
-            <div class="signal-detail">
-              <label>Record</label>
-              <div>${t.wins}W / ${t.losses}L</div>
-            </div>
-          </div>
-          ${t.openPositions && t.openPositions.length > 0 ? `
-            <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border);">
-              <label style="color: var(--text-muted); font-size: 0.75rem;">CURRENT POSITIONS</label>
-              <div style="margin-top: 0.5rem;">
-                ${t.openPositions.map(p => `
-                  <div style="display: flex; justify-content: space-between; padding: 0.25rem 0; font-size: 0.875rem;">
-                    <span>${p.outcome} <span style="color: var(--text-muted);">@ ${p.market?.slice(0, 30)}${p.market?.length > 30 ? '...' : ''}</span></span>
-                    <span>${formatMoney(p.size)} <span style="color: var(--text-muted);">(${(p.price * 100).toFixed(0)}¢)</span></span>
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-          ` : ''}
-        </div>
-      `).join('');
-      container.classList.remove('loading');
     }
     
     function renderAll() {
-      renderSummaryStats();
+      renderHeader();
       renderLeaderboard();
       renderEdgeTraders();
-      renderSignals();
       renderWhaleActivity();
-      renderEfficiency();
+      renderSignals();
     }
     
     function refreshData() {
@@ -659,8 +934,8 @@
     // Initial load
     fetchData();
     
-    // Auto-refresh every 60s
-    setInterval(fetchData, 60000);
+    // Auto-refresh every 30s
+    setInterval(fetchData, 30000);
   </script>
 </body>
 </html>

@@ -5,7 +5,25 @@
  */
 
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { fetchActivity, fetchPositions, fetchLeaderboard } from './api.js';
+
+// Load .env file
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const envPath = resolve(__dirname, '../.env');
+if (existsSync(envPath)) {
+  const envContent = readFileSync(envPath, 'utf-8');
+  for (const line of envContent.split('\n')) {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#')) {
+      const [key, ...valueParts] = trimmed.split('=');
+      if (key && valueParts.length > 0) {
+        process.env[key.trim()] = valueParts.join('=').trim();
+      }
+    }
+  }
+}
 
 const DATA_DIR = './data';
 const ACTIVITY_FILE = `${DATA_DIR}/whale-activity.json`;
@@ -73,12 +91,31 @@ async function sendAlert(message, trade) {
     }
   }
   
-  // Telegram
+  // Telegram - Bloomberg style
   if (CONFIG.telegramToken && CONFIG.telegramChat) {
     try {
-      const text = trade 
-        ? `🐋 *Whale Alert*\n\n*${trade.userName}* ${trade.side} ${trade.outcome}\nSize: $${trade.size?.toLocaleString()}\nMarket: ${trade.market}\n\n[View Profile](https://polymarket.com/profile/${trade.wallet})`
-        : `🐋 ${message}`;
+      let text;
+      if (trade) {
+        const side = trade.side?.toUpperCase() || 'TRADE';
+        const sideEmoji = side === 'BUY' ? '🟢' : side === 'SELL' ? '🔴' : '⚪';
+        const priceStr = trade.price ? ` @ ${(trade.price * 100).toFixed(1)}¢` : '';
+        const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+        
+        text = `${sideEmoji} <b>${side}</b> <code>$${trade.size?.toLocaleString()}</code>${priceStr}
+
+<b>${trade.outcome}</b>
+${trade.market}
+
+<code>┌─────────────────────────
+│ TRADER  ${trade.userName}
+│ PNL     +$${(trade.traderPnl || 0).toLocaleString()}
+│ VOLUME  $${(trade.traderVolume || 0).toLocaleString()}
+└─────────────────────────</code>
+
+<a href="https://polymarket.com/profile/${trade.wallet}">View Profile →</a>`;
+      } else {
+        text = `⚡ ${message}`;
+      }
       
       await fetch(`https://api.telegram.org/bot${CONFIG.telegramToken}/sendMessage`, {
         method: 'POST',
@@ -86,7 +123,7 @@ async function sendAlert(message, trade) {
         body: JSON.stringify({
           chat_id: CONFIG.telegramChat,
           text,
-          parse_mode: 'Markdown',
+          parse_mode: 'HTML',
           disable_web_page_preview: true
         })
       });

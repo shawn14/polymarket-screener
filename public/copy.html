@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Copy Candidates | Polymarket Screener</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --bg-secondary: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #7d8590;
+      --green: #3fb950;
+      --red: #f85149;
+      --blue: #58a6ff;
+      --yellow: #d29922;
+      --purple: #a371f7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 { font-size: 1.5rem; font-weight: 600; }
+    header h1 span { color: var(--purple); }
+    .back-link {
+      color: var(--blue);
+      text-decoration: none;
+      font-size: 0.875rem;
+    }
+    main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    .criteria {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 2rem;
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+    .criteria-item { display: flex; align-items: center; gap: 0.5rem; }
+    .criteria-item .label { color: var(--text-muted); font-size: 0.875rem; }
+    .criteria-item .value { color: var(--green); font-weight: 600; }
+    .trader-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    .trader-header {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .trader-name {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .trader-name a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+    .trader-name a:hover { text-decoration: underline; }
+    .trader-stats {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .stat { text-align: center; }
+    .stat-value { font-size: 1.125rem; font-weight: 600; }
+    .stat-value.positive { color: var(--green); }
+    .stat-label { font-size: 0.75rem; color: var(--text-muted); }
+    .positions {
+      padding: 1rem;
+    }
+    .positions-title {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .position {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 1rem;
+      padding: 0.75rem;
+      border-radius: 4px;
+      align-items: center;
+    }
+    .position:hover { background: rgba(255,255,255,0.05); }
+    .position-market {
+      font-size: 0.875rem;
+    }
+    .position-outcome {
+      font-weight: 500;
+    }
+    .position-market-name {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+    .position-size { font-weight: 600; }
+    .position-price { color: var(--text-muted); }
+    .position-pnl.positive { color: var(--green); }
+    .position-pnl.negative { color: var(--red); }
+    .loading { text-align: center; padding: 3rem; color: var(--text-muted); }
+    .empty { text-align: center; padding: 3rem; color: var(--text-muted); }
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: rgba(163, 113, 247, 0.2);
+      color: var(--purple);
+    }
+    .updated {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: right;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🎯 <span>Copy Candidates</span></h1>
+    <a class="back-link" href="/">← Back to Dashboard</a>
+  </header>
+  
+  <main>
+    <div class="criteria">
+      <div class="criteria-item">
+        <span class="label">Min Trades:</span>
+        <span class="value">15+</span>
+      </div>
+      <div class="criteria-item">
+        <span class="label">Min Win Rate:</span>
+        <span class="value">70%+</span>
+      </div>
+      <div class="criteria-item">
+        <span class="label">Min Efficiency:</span>
+        <span class="value">30%+</span>
+      </div>
+      <div class="criteria-item">
+        <span class="label">Requirement:</span>
+        <span class="value">Profitable</span>
+      </div>
+    </div>
+    
+    <div id="updated" class="updated"></div>
+    <div id="traders" class="loading">Loading copy candidates...</div>
+  </main>
+  
+  <script>
+    function formatMoney(n) {
+      if (n == null) return '-';
+      const sign = n >= 0 ? '+' : '';
+      return sign + '$' + Math.abs(n).toLocaleString('en-US', { maximumFractionDigits: 0 });
+    }
+    
+    function timeAgo(ts) {
+      const s = Math.floor((Date.now() - new Date(ts)) / 1000);
+      if (s < 60) return 'just now';
+      if (s < 3600) return Math.floor(s / 60) + 'm ago';
+      if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+      return Math.floor(s / 86400) + 'd ago';
+    }
+    
+    async function loadData() {
+      try {
+        const res = await fetch('/api/copy-candidates');
+        const data = await res.json();
+        
+        document.getElementById('updated').textContent = `Updated ${timeAgo(data.fetchedAt)}`;
+        
+        if (!data.traders || data.traders.length === 0) {
+          document.getElementById('traders').innerHTML = '<div class="empty">No traders currently meet all criteria. Check back later.</div>';
+          return;
+        }
+        
+        document.getElementById('traders').innerHTML = data.traders.map((t, i) => `
+          <div class="trader-card">
+            <div class="trader-header">
+              <div>
+                <span class="badge">#${i + 1}</span>
+                <span class="trader-name">
+                  <a href="https://polymarket.com/profile/${t.wallet}" target="_blank">${t.userName}</a>
+                </span>
+              </div>
+              <div class="trader-stats">
+                <div class="stat">
+                  <div class="stat-value positive">${formatMoney(t.pnl)}</div>
+                  <div class="stat-label">Total PnL</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-value">${t.efficiency}%</div>
+                  <div class="stat-label">Efficiency</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-value">${t.winRate}%</div>
+                  <div class="stat-label">Win Rate</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-value">${t.profitFactor}x</div>
+                  <div class="stat-label">Profit Factor</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-value">${t.wins}W/${t.losses}L</div>
+                  <div class="stat-label">${t.totalTrades} Trades</div>
+                </div>
+              </div>
+            </div>
+            ${t.positions && t.positions.length > 0 ? `
+              <div class="positions">
+                <div class="positions-title">Current Positions (${t.positions.length})</div>
+                ${t.positions.map(p => `
+                  <div class="position">
+                    <div class="position-market">
+                      <div class="position-outcome">${p.outcome}</div>
+                      <div class="position-market-name">${p.market?.slice(0, 50)}${p.market?.length > 50 ? '...' : ''}</div>
+                    </div>
+                    <div class="position-size">${formatMoney(p.size)}</div>
+                    <div class="position-price">${p.currentPrice ? (p.currentPrice * 100).toFixed(0) + '¢' : '-'}</div>
+                    <div class="position-pnl ${p.pnl >= 0 ? 'positive' : 'negative'}">${formatMoney(p.pnl)}</div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : '<div class="positions"><div class="positions-title">No open positions</div></div>'}
+          </div>
+        `).join('');
+        
+      } catch (err) {
+        document.getElementById('traders').innerHTML = '<div class="empty">Failed to load data. Please refresh.</div>';
+      }
+    }
+    
+    loadData();
+    setInterval(loadData, 300000); // Refresh every 5 min
+  </script>
+</body>
+</html>
