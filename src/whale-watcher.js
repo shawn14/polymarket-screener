@@ -101,15 +101,18 @@ async function sendAlert(message, trade) {
         const priceStr = trade.price ? ` @ ${(trade.price * 100).toFixed(1)}¢` : '';
         const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
         
+        const edgeBadge = trade.isEdgeTrader ? '🎯 EDGE TRADER' : '🐋 WHALE';
+        const edgeScoreStr = trade.edgeScore ? ` │ EDGE    ${trade.edgeScore}` : '';
+        
         text = `${sideEmoji} <b>${side}</b> <code>$${trade.size?.toLocaleString()}</code>${priceStr}
 
 <b>${trade.outcome}</b>
 ${trade.market}
 
 <code>┌─────────────────────────
+│ ${edgeBadge}
 │ TRADER  ${trade.userName}
-│ PNL     +$${(trade.traderPnl || 0).toLocaleString()}
-│ VOLUME  $${(trade.traderVolume || 0).toLocaleString()}
+│ PNL     +$${(trade.traderPnl || 0).toLocaleString()}${edgeScoreStr}
 └─────────────────────────</code>
 
 <a href="https://polymarket.com/profile/${trade.wallet}">View Profile →</a>`;
@@ -133,23 +136,57 @@ ${trade.market}
   }
 }
 
+const EDGE_WATCHLIST_FILE = `${DATA_DIR}/edge-watchlist.json`;
+
 async function updateWatchlist(state) {
-  console.log('Updating watchlist from leaderboard...');
+  console.log('Updating watchlist...');
   
+  // Load curated edge traders first
+  let edgeTraders = [];
+  if (existsSync(EDGE_WATCHLIST_FILE)) {
+    try {
+      const edgeData = JSON.parse(readFileSync(EDGE_WATCHLIST_FILE, 'utf-8'));
+      edgeTraders = edgeData.traders.map(t => ({
+        wallet: t.wallet,
+        userName: t.userName,
+        pnl: t.pnl,
+        volume: 0,
+        isEdgeTrader: true,
+        edgeScore: t.edgeScore
+      }));
+      console.log(`Loaded ${edgeTraders.length} curated edge traders`);
+    } catch (e) {
+      console.log('Could not load edge watchlist:', e.message);
+    }
+  }
+  
+  // Also add top PnL traders
   const topByPnl = await fetchLeaderboard({ 
     timePeriod: 'all', 
     orderBy: 'PNL', 
     limit: CONFIG.watchCount 
   });
   
-  state.watchlist = topByPnl.map(t => ({
+  const leaderboardTraders = topByPnl.map(t => ({
     wallet: t.proxyWallet,
     userName: t.userName,
     pnl: t.pnl,
-    volume: t.vol
+    volume: t.vol,
+    isEdgeTrader: false
   }));
   
-  console.log(`Watching ${state.watchlist.length} traders`);
+  // Merge: edge traders first, then leaderboard (deduped)
+  const seen = new Set(edgeTraders.map(t => t.wallet));
+  const combined = [...edgeTraders];
+  for (const t of leaderboardTraders) {
+    if (!seen.has(t.wallet)) {
+      combined.push(t);
+      seen.add(t.wallet);
+    }
+  }
+  
+  state.watchlist = combined;
+  console.log(`Watching ${state.watchlist.length} traders (${edgeTraders.length} edge + ${combined.length - edgeTraders.length} leaderboard)`);
   saveState(state);
 }
 
@@ -182,7 +219,9 @@ async function checkTraderActivity(trader, state) {
         price: trade.price,
         timestamp: trade.timestamp,
         traderPnl: trader.pnl,
-        traderVolume: trader.volume
+        traderVolume: trader.volume,
+        isEdgeTrader: trader.isEdgeTrader || false,
+        edgeScore: trader.edgeScore || null
       });
     }
     

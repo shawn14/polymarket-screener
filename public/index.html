@@ -685,6 +685,17 @@
       </div>
     </div>
     
+    <!-- Edge Watchlist Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">🎯 Edge Watchlist</span>
+        <span class="panel-subtitle">Tracking alerts</span>
+      </div>
+      <div class="panel-content" id="edge-watchlist">
+        <div class="loading">Loading...</div>
+      </div>
+    </div>
+    
     <!-- Whale Activity Panel -->
     <div class="panel">
       <div class="panel-header">
@@ -714,7 +725,8 @@
       detailed: null,
       signals: null,
       whaleActivity: null,
-      edgeTraders: null
+      edgeTraders: null,
+      edgeWatchlist: null
     };
     
     function formatMoney(n, compact = false) {
@@ -745,15 +757,16 @@
     
     async function fetchData() {
       try {
-        const [leaderboard, detailed, signals, whaleActivity, edgeTraders] = await Promise.all([
+        const [leaderboard, detailed, signals, whaleActivity, edgeTraders, edgeWatchlist] = await Promise.all([
           fetch('/api/leaderboard').then(r => r.json()),
           fetch('/api/top-detailed').then(r => r.json()),
           fetch('/api/signals').then(r => r.json()),
           fetch('/api/whale-activity').then(r => r.json()),
-          fetch('/api/edge-traders').then(r => r.json()).catch(() => ({ traders: [] }))
+          fetch('/api/edge-traders').then(r => r.json()).catch(() => ({ traders: [] })),
+          fetch('/api/edge-watchlist').then(r => r.json()).catch(() => ({ traders: [] }))
         ]);
         
-        data = { leaderboard, detailed, signals, whaleActivity, edgeTraders };
+        data = { leaderboard, detailed, signals, whaleActivity, edgeTraders, edgeWatchlist };
         renderAll();
       } catch (err) {
         console.error('Failed to fetch data:', err);
@@ -860,11 +873,13 @@
         return;
       }
       
-      container.innerHTML = data.whaleActivity.slice(0, 30).map(a => `
-        <div class="activity-item">
+      container.innerHTML = data.whaleActivity.slice(0, 30).map(a => {
+        const edgeBadge = a.isEdgeTrader ? '<span style="background: var(--orange); color: black; padding: 0 4px; font-size: 9px; margin-left: 4px;">EDGE</span>' : '';
+        return `
+        <div class="activity-item" ${a.isEdgeTrader ? 'style="border-left: 2px solid var(--orange);"' : ''}>
           <div class="activity-time">${timeAgo(a.timestamp)}</div>
           <div class="activity-main">
-            <span class="activity-trader">${a.userName}</span>
+            <span class="activity-trader">${a.userName}</span>${edgeBadge}
             <span class="${a.side === 'BUY' ? 'positive' : 'negative'}">${a.side}</span>
             ${a.outcome}
             <div class="activity-market">${a.market}</div>
@@ -873,7 +888,7 @@
             ${formatMoney(a.size, true)}
           </div>
         </div>
-      `).join('');
+      `}).join('');
     }
     
     function renderSignals() {
@@ -919,10 +934,40 @@
       }).join('');
     }
     
+    function renderEdgeWatchlist() {
+      const container = document.getElementById('edge-watchlist');
+      
+      if (!data.edgeWatchlist?.traders?.length) {
+        container.innerHTML = '<div class="empty">No edge traders configured</div>';
+        return;
+      }
+      
+      container.innerHTML = data.edgeWatchlist.traders.map(t => `
+        <div class="activity-item" style="border-left: 2px solid var(--orange);">
+          <div class="activity-time">
+            <span class="edge-score" style="font-size: 10px;">${t.edgeScore}</span>
+          </div>
+          <div class="activity-main">
+            <a class="trader-link activity-trader" href="https://polymarket.com/profile/${t.wallet}" target="_blank">
+              ${t.userName}
+            </a>
+            <div style="font-size: 10px; color: var(--text-muted);">
+              ${t.trades} trades · ${t.winRate}% WR · ${t.efficiency}% eff
+            </div>
+            ${t.note ? `<div class="activity-market">${t.note}</div>` : ''}
+          </div>
+          <div class="activity-size positive">
+            ${formatMoney(t.pnl, true)}
+          </div>
+        </div>
+      `).join('');
+    }
+    
     function renderAll() {
       renderHeader();
       renderLeaderboard();
       renderEdgeTraders();
+      renderEdgeWatchlist();
       renderWhaleActivity();
       renderSignals();
     }
