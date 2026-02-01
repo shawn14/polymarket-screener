@@ -879,7 +879,14 @@
         return;
       }
       
-      container.innerHTML = data.whaleActivity.slice(0, 30).map(a => {
+      // Sort by timestamp descending (most recent first)
+      const sorted = [...data.whaleActivity].sort((a, b) => {
+        const tsA = typeof a.timestamp === 'number' && a.timestamp < 10000000000 ? a.timestamp * 1000 : new Date(a.timestamp).getTime();
+        const tsB = typeof b.timestamp === 'number' && b.timestamp < 10000000000 ? b.timestamp * 1000 : new Date(b.timestamp).getTime();
+        return tsB - tsA;
+      });
+      
+      container.innerHTML = sorted.slice(0, 30).map(a => {
         const edgeBadge = a.isEdgeTrader ? '<span style="background: var(--orange); color: black; padding: 0 4px; font-size: 9px; margin-left: 4px;">EDGE</span>' : '';
         return `
         <div class="activity-item" ${a.isEdgeTrader ? 'style="border-left: 2px solid var(--orange);"' : ''}>
