@@ -200,7 +200,10 @@ async function checkTraderActivity(trader, state) {
     const newTrades = [];
     
     for (const trade of activity) {
-      const tradeTime = new Date(trade.timestamp).getTime();
+      // Polymarket returns timestamp in seconds, convert to ms
+      const tradeTime = (typeof trade.timestamp === 'number' && trade.timestamp < 10000000000) 
+        ? trade.timestamp * 1000 
+        : new Date(trade.timestamp).getTime();
       
       // Skip old trades
       if (tradeTime <= lastSeen) continue;
@@ -217,7 +220,7 @@ async function checkTraderActivity(trader, state) {
         market: trade.eventTitle || trade.market || trade.slug,
         size,
         price: trade.price,
-        timestamp: trade.timestamp,
+        timestamp: new Date(tradeTime).toISOString(),
         traderPnl: trader.pnl,
         traderVolume: trader.volume,
         isEdgeTrader: trader.isEdgeTrader || false,
@@ -227,7 +230,10 @@ async function checkTraderActivity(trader, state) {
     
     // Update last seen
     if (activity.length > 0) {
-      const latestTime = Math.max(...activity.map(t => new Date(t.timestamp).getTime()));
+      const latestTime = Math.max(...activity.map(t => {
+        const ts = t.timestamp;
+        return (typeof ts === 'number' && ts < 10000000000) ? ts * 1000 : new Date(ts).getTime();
+      }));
       state.lastSeen[trader.wallet] = latestTime;
     }
     
