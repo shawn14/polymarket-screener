@@ -1,0 +1,92 @@
+[
+  {
+    "wallet": "0xdc876e6873772d38716fda7f2452a78d426d7ab6",
+    "userName": "432614799197",
+    "side": "BUY",
+    "outcome": "Nets",
+    "market": "nba-bkn-det-2026-02-01-spread-home-12pt5",
+    "size": 13877.9955,
+    "timestamp": 1769976926,
+    "isEdgeTrader": false
+  },
+  {
+    "wallet": "0xdbade4c82fb72780a0db9a38f821d8671aba9c95",
+    "userName": "SwissMiss",
+    "side": "BUY",
+    "outcome": "Yes",
+    "market": "us-strikes-iran-by-june-30-2026-699-664-723-485-753-218-567-164-387-443-377-384-159-973-494-631-694-956-361-443-224-518-537",
+    "size": 8100,
+    "timestamp": 1769974104,
+    "isEdgeTrader": false
+  },
+  {
+    "wallet": "0xdbade4c82fb72780a0db9a38f821d8671aba9c95",
+    "userName": "SwissMiss",
+    "side": "BUY",
+    "outcome": "Yes",
+    "market": "will-there-be-another-us-government-shutdown-by-january-31",
+    "size": 7741.11674,
+    "timestamp": 1769972984,
+    "isEdgeTrader": false
+  },
+  {
+    "wallet": "0xdbade4c82fb72780a0db9a38f821d8671aba9c95",
+    "userName": "SwissMiss",
+    "side": "BUY",
+    "outcome": "Yes",
+    "market": "will-there-be-another-us-government-shutdown-by-january-31",
+    "size": 18035.856,
+    "timestamp": 1769972886,
+    "isEdgeTrader": false
+  },
+  {
+    "wallet": "0xdbade4c82fb72780a0db9a38f821d8671aba9c95",
+    "userName": "SwissMiss",
+    "side": "BUY",
+    "outcome": "Yes",
+    "market": "will-there-be-another-us-government-shutdown-by-january-31",
+    "size": 7624.72,
+    "timestamp": 1769972868,
+    "isEdgeTrader": false
+  },
+  {
+    "wallet": "0xdbade4c82fb72780a0db9a38f821d8671aba9c95",
+    "userName": "SwissMiss",
+    "side": "BUY",
+    "outcome": "Yes",
+    "market": "will-there-be-another-us-government-shutdown-by-january-31",
+    "size": 362306.49488,
+    "timestamp": 1769972838,
+    "isEdgeTrader": false
+  },
+  {
+    "wallet": "0x14964aefa2cd7caff7878b3820a690a03c5aa429",
+    "userName": "gmpm",
+    "side": "TRADE",
+    "outcome": "Kings vs. Hurricanes",
+    "market": "nhl-lak-car-2026-02-01",
+    "size": 52949.8987,
+    "timestamp": 1769971014,
+    "isEdgeTrader": false
+  },
+  {
+    "wallet": "0x14964aefa2cd7caff7878b3820a690a03c5aa429",
+    "userName": "gmpm",
+    "side": "BUY",
+    "outcome": "Kings",
+    "market": "nhl-lak-car-2026-02-01",
+    "size": 24862.5,
+    "timestamp": 1769970960,
+    "isEdgeTrader": false
+  },
+  {
+    "wallet": "0xdbade4c82fb72780a0db9a38f821d8671aba9c95",
+    "userName": "SwissMiss",
+    "side": "BUY",
+    "outcome": "No",
+    "market": "khamenei-out-as-supreme-leader-of-iran-by-march-31",
+    "size": 101336.12,
+    "timestamp": 1769970866,
+    "isEdgeTrader": false
+  }
+]
