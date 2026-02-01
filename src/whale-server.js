@@ -27,7 +27,11 @@ let tradesFound = 0;
 let isRunning = false;
 
 function loadState() {
-  if (!existsSync(STATE_FILE)) return { lastSeen: {}, watchlist: [] };
+  if (!existsSync(STATE_FILE)) {
+    // Initialize with current time to only capture NEW activity
+    console.log('First run - initializing state to capture only NEW trades');
+    return { lastSeen: {}, watchlist: [], initialized: Date.now() };
+  }
   return JSON.parse(readFileSync(STATE_FILE, 'utf-8'));
 }
 
@@ -153,11 +157,16 @@ async function checkTraderActivity(trader, state) {
     const activity = await fetchActivity(trader.wallet, { limit: 10 });
     if (!activity || activity.length === 0) return [];
     
-    const lastSeen = state.lastSeen[trader.wallet] || 0;
+    // On first run, use initialization time to skip all historical trades
+    const lastSeen = state.lastSeen[trader.wallet] || state.initialized || Date.now();
     const newTrades = [];
     
     for (const trade of activity) {
-      const tradeTime = new Date(trade.timestamp).getTime();
+      // Polymarket returns timestamp in seconds, convert to ms
+      const tradeTime = (typeof trade.timestamp === 'number' && trade.timestamp < 10000000000) 
+        ? trade.timestamp * 1000 
+        : new Date(trade.timestamp).getTime();
+      
       if (tradeTime <= lastSeen) continue;
       
       const size = Math.abs(trade.usdcSize || trade.size || 0);
@@ -176,7 +185,10 @@ async function checkTraderActivity(trader, state) {
     }
     
     if (activity.length > 0) {
-      const latestTime = Math.max(...activity.map(t => new Date(t.timestamp).getTime()));
+      const latestTime = Math.max(...activity.map(t => {
+        const ts = t.timestamp;
+        return (typeof ts === 'number' && ts < 10000000000) ? ts * 1000 : new Date(ts).getTime();
+      }));
       state.lastSeen[trader.wallet] = latestTime;
     }
     
