@@ -28,11 +28,13 @@ let isRunning = false;
 
 function loadState() {
   if (!existsSync(STATE_FILE)) {
-    // Initialize with current time to only capture NEW activity
-    console.log('First run - initializing state to capture only NEW trades');
-    return { lastSeen: {}, watchlist: [], initialized: Date.now() };
+    // First run - set flag to skip alerts on first check
+    console.log('First run - will initialize state WITHOUT sending alerts');
+    return { lastSeen: {}, watchlist: [], isFirstRun: true };
   }
-  return JSON.parse(readFileSync(STATE_FILE, 'utf-8'));
+  const state = JSON.parse(readFileSync(STATE_FILE, 'utf-8'));
+  state.isFirstRun = false;
+  return state;
 }
 
 function saveState(state) {
@@ -203,9 +205,24 @@ async function runOnce() {
   
   const state = loadState();
   const allActivity = loadActivity();
+  const isFirstRun = state.isFirstRun;
   
   if (state.watchlist.length === 0 || Math.random() < 0.1) {
     await updateWatchlist(state);
+  }
+  
+  if (isFirstRun) {
+    // First run: just set lastSeen to NOW for all traders, NO alerts
+    console.log(`[${new Date().toISOString()}] FIRST RUN - Initializing state only (no alerts)...`);
+    const now = Date.now();
+    for (const trader of state.watchlist) {
+      state.lastSeen[trader.wallet] = now;
+    }
+    state.isFirstRun = false;
+    saveState(state);
+    console.log(`Initialized lastSeen for ${state.watchlist.length} traders. Future trades will trigger alerts.`);
+    lastCheck = new Date().toISOString();
+    return;
   }
   
   console.log(`[${new Date().toISOString()}] Checking ${state.watchlist.length} traders...`);
