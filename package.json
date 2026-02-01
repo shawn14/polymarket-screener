@@ -14,7 +14,8 @@
     "copy": "node src/copy-trader.js",
     "copy:add": "node src/copy-trader.js add",
     "copy:list": "node src/copy-trader.js list",
-    "copy:signals": "node src/copy-trader.js signals"
+    "copy:signals": "node src/copy-trader.js signals",
+    "edge": "node src/edge-detector.js"
   },
   "dependencies": {},
   "devDependencies": {}

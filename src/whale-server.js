@@ -74,15 +74,35 @@ async function sendAlert(message, trade) {
 }
 
 async function updateWatchlist(state) {
-  console.log('Updating watchlist...');
-  const topByPnl = await fetchLeaderboard({ timePeriod: 'all', orderBy: 'PNL', limit: CONFIG.watchCount });
-  state.watchlist = topByPnl.map(t => ({
-    wallet: t.proxyWallet,
-    userName: t.userName,
-    pnl: t.pnl,
-    volume: t.vol
-  }));
-  console.log(`Watching ${state.watchlist.length} traders`);
+  console.log('Updating watchlist with edge detection...');
+  
+  // Get top by PnL across time periods
+  const [allTime, monthly, weekly] = await Promise.all([
+    fetchLeaderboard({ timePeriod: 'all', orderBy: 'PNL', limit: 100 }),
+    fetchLeaderboard({ timePeriod: 'month', orderBy: 'PNL', limit: 50 }),
+    fetchLeaderboard({ timePeriod: 'week', orderBy: 'PNL', limit: 50 })
+  ]);
+  
+  // Combine and dedupe
+  const traderMap = new Map();
+  for (const t of [...allTime, ...monthly, ...weekly]) {
+    if (!traderMap.has(t.proxyWallet) && (t.pnl || 0) > 0 && (t.vol || 0) > 10000) {
+      traderMap.set(t.proxyWallet, {
+        wallet: t.proxyWallet,
+        userName: t.userName,
+        pnl: t.pnl,
+        volume: t.vol,
+        efficiency: t.pnl / (t.vol || 1)
+      });
+    }
+  }
+  
+  // Sort by efficiency (edge proxy) and take top N
+  state.watchlist = Array.from(traderMap.values())
+    .sort((a, b) => b.efficiency - a.efficiency)
+    .slice(0, CONFIG.watchCount);
+  
+  console.log(`Watching ${state.watchlist.length} high-edge traders`);
   saveState(state);
 }
 

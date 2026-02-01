@@ -272,6 +272,7 @@
   <main>
     <div class="tabs">
       <button class="tab active" data-tab="leaderboard">Leaderboard</button>
+      <button class="tab" data-tab="edge">🎯 Edge Traders</button>
       <button class="tab" data-tab="signals">Copy Signals</button>
       <button class="tab" data-tab="whales">Whale Activity</button>
       <button class="tab" data-tab="efficiency">Efficiency</button>
@@ -311,6 +312,14 @@
         </thead>
         <tbody></tbody>
       </table>
+    </div>
+    
+    <div id="edge" class="panel">
+      <h2 style="margin-bottom: 1rem;">🎯 Edge Traders</h2>
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+        Traders ranked by edge score — combining efficiency, win rate, profit factor, and consistency. Click to see their current positions.
+      </p>
+      <div id="edge-list" class="loading">Loading edge traders...</div>
     </div>
     
     <div id="signals" class="panel">
@@ -356,7 +365,8 @@
       leaderboard: null,
       detailed: null,
       signals: null,
-      whaleActivity: null
+      whaleActivity: null,
+      edgeTraders: null
     };
     
     // Tab switching
@@ -390,14 +400,15 @@
     
     async function fetchData() {
       try {
-        const [leaderboard, detailed, signals, whaleActivity] = await Promise.all([
+        const [leaderboard, detailed, signals, whaleActivity, edgeTraders] = await Promise.all([
           fetch('/api/leaderboard').then(r => r.json()),
           fetch('/api/top-detailed').then(r => r.json()),
           fetch('/api/signals').then(r => r.json()),
-          fetch('/api/whale-activity').then(r => r.json())
+          fetch('/api/whale-activity').then(r => r.json()),
+          fetch('/api/edge-traders').then(r => r.json()).catch(() => ({ traders: [] }))
         ]);
         
-        data = { leaderboard, detailed, signals, whaleActivity };
+        data = { leaderboard, detailed, signals, whaleActivity, edgeTraders };
         renderAll();
       } catch (err) {
         console.error('Failed to fetch data:', err);
@@ -572,9 +583,70 @@
       `).join('');
     }
     
+    function renderEdgeTraders() {
+      const container = document.getElementById('edge-list');
+      
+      if (!data.edgeTraders || !data.edgeTraders.traders || data.edgeTraders.traders.length === 0) {
+        container.innerHTML = '<div class="empty">Loading edge data...</div>';
+        container.classList.remove('loading');
+        return;
+      }
+      
+      container.innerHTML = data.edgeTraders.traders.map((t, i) => `
+        <div class="signal-card">
+          <div class="signal-header">
+            <span>
+              <strong>#${i + 1}</strong>
+              <a class="trader-link" href="https://polymarket.com/profile/${t.wallet}" target="_blank">
+                ${t.userName}
+              </a>
+            </span>
+            <span class="badge high">Edge: ${t.edgeScore}</span>
+          </div>
+          <div class="signal-details" style="margin-top: 0.75rem;">
+            <div class="signal-detail">
+              <label>PnL</label>
+              <div class="positive">${formatMoney(t.pnl)}</div>
+            </div>
+            <div class="signal-detail">
+              <label>Efficiency</label>
+              <div>${t.efficiency}%</div>
+            </div>
+            <div class="signal-detail">
+              <label>Win Rate</label>
+              <div>${t.winRate}%</div>
+            </div>
+            <div class="signal-detail">
+              <label>Profit Factor</label>
+              <div>${t.profitFactor}x</div>
+            </div>
+            <div class="signal-detail">
+              <label>Record</label>
+              <div>${t.wins}W / ${t.losses}L</div>
+            </div>
+          </div>
+          ${t.openPositions && t.openPositions.length > 0 ? `
+            <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border);">
+              <label style="color: var(--text-muted); font-size: 0.75rem;">CURRENT POSITIONS</label>
+              <div style="margin-top: 0.5rem;">
+                ${t.openPositions.map(p => `
+                  <div style="display: flex; justify-content: space-between; padding: 0.25rem 0; font-size: 0.875rem;">
+                    <span>${p.outcome} <span style="color: var(--text-muted);">@ ${p.market?.slice(0, 30)}${p.market?.length > 30 ? '...' : ''}</span></span>
+                    <span>${formatMoney(p.size)} <span style="color: var(--text-muted);">(${(p.price * 100).toFixed(0)}¢)</span></span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+      container.classList.remove('loading');
+    }
+    
     function renderAll() {
       renderSummaryStats();
       renderLeaderboard();
+      renderEdgeTraders();
       renderSignals();
       renderWhaleActivity();
       renderEfficiency();
