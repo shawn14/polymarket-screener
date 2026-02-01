@@ -8,7 +8,13 @@
     "start": "node src/index.js",
     "fetch": "node src/fetch-traders.js",
     "analyze": "node src/analyze.js",
-    "serve": "node src/server.js"
+    "serve": "node src/server.js",
+    "whales": "node src/whale-watcher.js",
+    "whales:daemon": "node src/whale-watcher.js --daemon",
+    "copy": "node src/copy-trader.js",
+    "copy:add": "node src/copy-trader.js add",
+    "copy:list": "node src/copy-trader.js list",
+    "copy:signals": "node src/copy-trader.js signals"
   },
   "dependencies": {},
   "devDependencies": {}
