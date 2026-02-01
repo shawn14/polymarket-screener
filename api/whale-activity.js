@@ -20,7 +20,7 @@ export default async function handler(req) {
     const params = new URLSearchParams({
       timePeriod: 'all',
       orderBy: 'PNL',
-      limit: '10',
+      limit: '50',
       offset: '0',
       category: 'overall'
     });
@@ -30,7 +30,7 @@ export default async function handler(req) {
     // Fetch recent activity from each
     const allActivity = [];
     
-    for (const trader of topTraders.slice(0, 10)) {
+    for (const trader of topTraders.slice(0, 30)) {
       try {
         const activity = await fetchActivity(trader.proxyWallet, 5);
         
