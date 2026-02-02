@@ -688,8 +688,8 @@
     <!-- Edge Watchlist Panel -->
     <div class="panel">
       <div class="panel-header">
-        <span class="panel-title">🎯 Edge Watchlist</span>
-        <span class="panel-subtitle">Tracking alerts</span>
+        <span class="panel-title">🎯 Top Edge Traders</span>
+        <span class="panel-subtitle">Highest edge scores</span>
       </div>
       <div class="panel-content" id="edge-watchlist">
         <div class="loading">Loading...</div>
@@ -956,12 +956,16 @@
     function renderEdgeWatchlist() {
       const container = document.getElementById('edge-watchlist');
       
-      if (!data.edgeWatchlist?.traders?.length) {
-        container.innerHTML = '<div class="empty">No edge traders configured</div>';
+      // Use live edge traders data (top performers by edge score)
+      const traders = data.edgeTraders?.traders || [];
+      
+      if (!traders.length) {
+        container.innerHTML = '<div class="empty">Loading edge traders...</div>';
         return;
       }
       
-      container.innerHTML = data.edgeWatchlist.traders.map(t => `
+      // Show top 10 by edge score
+      container.innerHTML = traders.slice(0, 10).map(t => `
         <div class="activity-item" style="border-left: 2px solid var(--orange);">
           <div class="activity-time">
             <span class="edge-score" style="font-size: 10px;">${t.edgeScore}</span>
@@ -971,9 +975,8 @@
               ${t.userName}
             </a>
             <div style="font-size: 10px; color: var(--text-muted);">
-              ${t.trades} trades · ${t.winRate}% WR · ${t.efficiency}% eff
+              ${t.totalTrades} trades · ${t.winRate?.toFixed(1)}% WR · ${t.efficiency?.toFixed(1)}% eff
             </div>
-            ${t.note ? `<div class="activity-market">${t.note}</div>` : ''}
           </div>
           <div class="activity-size positive">
             ${formatMoney(t.pnl, true)}
