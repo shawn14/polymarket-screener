@@ -813,9 +813,15 @@
         return {
           ...t,
           ...detail,
+          // Merge edge stats at root level (API returns flat structure)
+          winRate: edge?.winRate ? edge.winRate / 100 : (detail?.winRate || null),
+          totalTrades: edge?.totalTrades || detail?.totalTrades || null,
+          avgWin: edge?.avgWin || detail?.avgWin || null,
+          avgLoss: edge?.avgLoss || detail?.avgLoss || null,
+          profitFactor: edge?.profitFactor || detail?.profitFactor || null,
           edgeScore: edge?.edgeScore || null,
           efficiency: t.vol > 0 ? (t.pnl / t.vol) : 0,
-          stats: edge?.stats || detail || {}
+          stats: detail || {}
         };
       });
       
@@ -839,11 +845,11 @@
       
       tbody.innerHTML = traders.slice(0, 50).map((t, i) => {
         const eff = t.efficiency * 100;
-        const wr = t.winRate ? t.winRate * 100 : (t.stats?.winRate || null);
-        const trades = t.totalTrades || t.stats?.totalTrades || '-';
-        const avgWin = t.avgWin || t.stats?.avgWin || null;
-        const avgLoss = t.avgLoss || t.stats?.avgLoss || null;
-        const pf = t.profitFactor || t.stats?.profitFactor || null;
+        const wr = t.winRate ? t.winRate * 100 : null;
+        const trades = t.totalTrades || '-';
+        const avgWin = t.avgWin || null;
+        const avgLoss = t.avgLoss || null;
+        const pf = t.profitFactor || null;
         
         return `
           <tr>
