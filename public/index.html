@@ -304,6 +304,23 @@
       color: white;
     }
     
+    .alert-cell {
+      text-align: center;
+    }
+    
+    .alert-badge {
+      font-size: 16px;
+      cursor: help;
+    }
+    
+    .alert-copy {
+      filter: drop-shadow(0 0 4px var(--orange));
+    }
+    
+    .alert-whale {
+      opacity: 0.8;
+    }
+    
     .side-cell {
       font-weight: bold;
     }
@@ -420,7 +437,7 @@
   <header>
     <div class="logo">
       <div class="logo-box">PM</div>
-      <div class="logo-text">Whale Screener</div>
+      <div class="logo-text">Whale Alerts</div>
     </div>
     <div class="header-stats">
       <div class="header-stat">
@@ -458,10 +475,11 @@
     </div>
     
     <div class="filter-group">
-      <label>Trader</label>
+      <label>Alert Type</label>
       <select id="filter-edge" onchange="renderTable()">
-        <option value="all">All Traders</option>
-        <option value="edge">Edge Only</option>
+        <option value="all">All Alerts</option>
+        <option value="edge">🎯 Copy Signals</option>
+        <option value="whale">🐋 Whale Only</option>
       </select>
     </div>
     
@@ -492,8 +510,12 @@
       <span class="value" id="stat-showing">-</span>
     </div>
     <div class="stat-item">
-      <label>Edge Trades:</label>
-      <span class="value highlight" id="stat-edge">-</span>
+      <label>🎯 Copy Signals:</label>
+      <span class="value highlight" id="stat-copy">-</span>
+    </div>
+    <div class="stat-item">
+      <label>🐋 Whale Alerts:</label>
+      <span class="value" id="stat-whale">-</span>
     </div>
     <div class="stat-item">
       <label>Avg Size:</label>
@@ -506,6 +528,7 @@
       <table id="whale-table">
         <thead>
           <tr>
+            <th style="width: 40px;">Alert</th>
             <th data-sort="timestamp" class="sorted">Time</th>
             <th data-sort="userName">Trader</th>
             <th data-sort="side">Side</th>
@@ -517,9 +540,9 @@
         </thead>
         <tbody id="table-body">
           <tr>
-            <td colspan="7" class="empty-state">
-              <h2>Loading whale activity...</h2>
-              <p>Fetching latest trades from top Polymarket traders</p>
+            <td colspan="8" class="empty-state">
+              <h2>Loading Telegram alerts...</h2>
+              <p>Fetching trades sent to @Pmwhale_bot</p>
             </td>
           </tr>
         </tbody>
@@ -588,6 +611,7 @@
       let filtered = rawData.filter(item => {
         if (side !== 'all' && item.side !== side) return false;
         if (edge === 'edge' && !item.isEdgeTrader && !item.isCopyCandidate) return false;
+        if (edge === 'whale' && (item.isEdgeTrader || item.isCopyCandidate)) return false;
         if (item.size < minSize) return false;
         if (search) {
           const searchIn = (item.userName + ' ' + item.market + ' ' + item.outcome).toLowerCase();
@@ -658,7 +682,7 @@
       
       if (!filtered.length) {
         tbody.innerHTML = `
-          <tr><td colspan="7" class="empty-state">
+          <tr><td colspan="8" class="empty-state">
             <h2>No trades found</h2>
             <p>Try adjusting your filters</p>
           </td></tr>
@@ -670,15 +694,19 @@
       tbody.innerHTML = filtered.map(item => {
         const isEdge = item.isEdgeTrader || item.isCopyCandidate;
         const priceDisplay = item.price ? (item.price * 100).toFixed(1) + '¢' : '-';
+        const alertEmoji = isEdge ? '🎯' : '🐋';
+        const alertType = isEdge ? 'COPY' : 'WHALE';
         
         return `
           <tr class="${isEdge ? 'edge-row' : ''}">
+            <td class="alert-cell" title="${isEdge ? 'Copy Signal - Edge Trader' : 'Whale Alert'}">
+              <span class="alert-badge ${isEdge ? 'alert-copy' : 'alert-whale'}">${alertEmoji}</span>
+            </td>
             <td class="dim">${timeAgo(item.timestamp)}</td>
             <td>
               <a class="trader-link" href="https://polymarket.com/profile/${item.wallet}" target="_blank">
                 ${item.userName || 'Unknown'}
               </a>
-              ${isEdge ? '<span class="badge badge-edge">EDGE</span>' : ''}
             </td>
             <td class="side-cell ${item.side === 'BUY' ? 'positive' : 'negative'}">
               ${item.side}
@@ -709,13 +737,15 @@
     }
     
     function updateFilteredStats(filtered) {
-      const edgeCount = filtered.filter(t => t.isEdgeTrader || t.isCopyCandidate).length;
+      const copyCount = filtered.filter(t => t.isEdgeTrader || t.isCopyCandidate).length;
+      const whaleCount = filtered.length - copyCount;
       const avgSize = filtered.length > 0 
         ? filtered.reduce((s, t) => s + (t.size || 0), 0) / filtered.length 
         : 0;
       
-      document.getElementById('stat-showing').textContent = filtered.length + ' trades';
-      document.getElementById('stat-edge').textContent = edgeCount;
+      document.getElementById('stat-showing').textContent = filtered.length + ' alerts';
+      document.getElementById('stat-copy').textContent = copyCount;
+      document.getElementById('stat-whale').textContent = whaleCount;
       document.getElementById('stat-avg-size').textContent = formatMoney(avgSize);
     }
     
