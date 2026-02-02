@@ -3,42 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>POLYMARKET SCREENER</title>
+  <title>POLYMARKET WHALE SCREENER</title>
   <style>
     :root {
       --bg: #000000;
-      --bg-panel: #1a1a1a;
+      --bg-panel: #111111;
       --bg-header: #0a0a0a;
-      --border: #333333;
+      --bg-row-hover: #1a1a1a;
+      --bg-row-edge: rgba(255,102,0,0.06);
+      --border: #222222;
       --text: #ffffff;
-      --text-dim: #888888;
+      --text-dim: #999999;
       --text-muted: #666666;
       --orange: #ff6600;
-      --orange-dim: #cc5500;
       --green: #00ff00;
-      --red: #ff3333;
-      --blue: #3399ff;
-      --yellow: #ffcc00;
+      --red: #ff4444;
     }
     
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
     body {
-      font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', monospace;
+      font-family: 'SF Mono', 'Monaco', 'Consolas', 'Roboto Mono', monospace;
       background: var(--bg);
       color: var(--text);
       line-height: 1.4;
       font-size: 13px;
+      min-height: 100vh;
     }
     
-    /* Bloomberg-style header */
+    /* Header */
     header {
       background: var(--bg-header);
       border-bottom: 2px solid var(--orange);
-      padding: 0.5rem 1rem;
+      padding: 0.75rem 1.5rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
     
     .logo {
@@ -50,7 +53,7 @@
     .logo-box {
       background: var(--orange);
       color: black;
-      padding: 0.25rem 0.5rem;
+      padding: 0.3rem 0.6rem;
       font-weight: bold;
       font-size: 14px;
       letter-spacing: 1px;
@@ -58,8 +61,8 @@
     
     .logo-text {
       color: var(--text);
-      font-size: 12px;
-      letter-spacing: 2px;
+      font-size: 13px;
+      letter-spacing: 1px;
       text-transform: uppercase;
     }
     
@@ -71,311 +74,35 @@
     
     .header-stat {
       display: flex;
-      gap: 0.5rem;
+      flex-direction: column;
+      align-items: flex-end;
     }
     
     .header-stat label {
       color: var(--text-muted);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     
     .header-stat .value {
       color: var(--orange);
       font-weight: bold;
+      font-size: 14px;
     }
     
-    .header-actions {
-      display: flex;
-      gap: 0.5rem;
-    }
+    .header-stat .value.positive { color: var(--green); }
+    .header-stat .value.negative { color: var(--red); }
     
-    .btn {
-      background: var(--bg-panel);
-      color: var(--orange);
-      border: 1px solid var(--orange);
-      padding: 0.35rem 0.75rem;
-      font-family: inherit;
-      font-size: 11px;
-      cursor: pointer;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    
-    .btn:hover {
-      background: var(--orange);
-      color: black;
-    }
-    
-    /* Main layout */
-    main {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr auto;
-      gap: 2px;
-      height: calc(100vh - 50px);
-      padding: 2px;
-      background: var(--border);
-    }
-    
-    /* Full-width panels */
-    .panel.full {
-      grid-column: span 2;
-      max-height: 60vh;
-    }
-    
-    /* Whale panel full width */
-    .panel.whale-full {
-      grid-column: span 2;
-      min-height: 50vh;
-    }
-    
-    /* Whale table specific */
-    #whale-table {
-      font-size: 12px;
-    }
-    
-    #whale-table td {
-      padding: 0.4rem 0.5rem;
-      white-space: nowrap;
-    }
-    
-    #whale-table td:nth-child(4),
-    #whale-table td:nth-child(5) {
-      white-space: normal;
-      max-width: 250px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    
-    /* Panel styling */
-    .panel {
-      background: var(--bg);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    
-    .panel-header {
+    /* Filter Bar */
+    .filter-bar {
       background: var(--bg-panel);
       border-bottom: 1px solid var(--border);
-      padding: 0.5rem 0.75rem;
+      padding: 0.75rem 1.5rem;
       display: flex;
-      justify-content: space-between;
+      gap: 1.5rem;
       align-items: center;
-    }
-    
-    .panel-title {
-      color: var(--orange);
-      font-size: 11px;
-      font-weight: bold;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-    
-    .panel-subtitle {
-      color: var(--text-muted);
-      font-size: 10px;
-    }
-    
-    .panel-content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 0.5rem;
-    }
-    
-    /* Table styling */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-    }
-    
-    th {
-      text-align: left;
-      padding: 0.4rem 0.5rem;
-      background: var(--bg-panel);
-      color: var(--orange);
-      font-weight: normal;
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-    }
-    
-    td {
-      padding: 0.35rem 0.5rem;
-      border-bottom: 1px solid #222;
-    }
-    
-    tr:hover td {
-      background: var(--bg-panel);
-    }
-    
-    .col-rank { width: 40px; color: var(--text-muted); }
-    .col-name { }
-    .col-num { text-align: right; font-variant-numeric: tabular-nums; }
-    
-    .positive { color: var(--green); }
-    .negative { color: var(--red); }
-    .highlight { color: var(--orange); }
-    .dim { color: var(--text-muted); }
-    
-    .trader-link {
-      color: var(--text);
-      text-decoration: none;
-    }
-    
-    .trader-link:hover {
-      color: var(--orange);
-    }
-    
-    /* Edge score bar */
-    .edge-bar {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    
-    .edge-bar-fill {
-      height: 4px;
-      background: var(--orange);
-      border-radius: 2px;
-    }
-    
-    .edge-bar-track {
-      flex: 1;
-      height: 4px;
-      background: var(--bg-panel);
-      border-radius: 2px;
-      max-width: 60px;
-    }
-    
-    /* Activity feed */
-    .activity-item {
-      padding: 0.25rem 0.5rem;
-      border-bottom: 1px solid #222;
-      display: grid;
-      grid-template-columns: 28px 1fr auto;
-      gap: 0.4rem;
-      align-items: center;
-      line-height: 1.2;
-    }
-    
-    .activity-item:hover {
-      background: var(--bg-panel);
-    }
-    
-    .activity-time {
-      color: var(--text-muted);
-      font-size: 9px;
-    }
-    
-    .activity-main {
-      min-width: 0;
-      font-size: 11px;
-    }
-    
-    .activity-trader {
-      color: var(--orange);
-    }
-    
-    .activity-market {
-      color: var(--text-dim);
-      font-size: 10px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    
-    .activity-size {
-      text-align: right;
-      font-weight: bold;
-      font-size: 11px;
-    }
-    
-    /* Signal cards */
-    .signal-item {
-      background: var(--bg-panel);
-      border: 1px solid var(--border);
-      padding: 0.75rem;
-      margin-bottom: 0.5rem;
-    }
-    
-    .signal-header {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 0.5rem;
-    }
-    
-    .signal-market {
-      color: var(--text);
-      font-weight: bold;
-    }
-    
-    .signal-confidence {
-      padding: 0.15rem 0.4rem;
-      font-size: 10px;
-      text-transform: uppercase;
-    }
-    
-    .signal-confidence.high { background: var(--green); color: black; }
-    .signal-confidence.medium { background: var(--yellow); color: black; }
-    .signal-confidence.low { background: var(--text-muted); color: black; }
-    
-    .signal-details {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0.5rem;
-      margin-top: 0.5rem;
-      padding-top: 0.5rem;
-      border-top: 1px solid var(--border);
-    }
-    
-    .signal-detail label {
-      display: block;
-      color: var(--text-muted);
-      font-size: 9px;
-      text-transform: uppercase;
-      margin-bottom: 0.15rem;
-    }
-    
-    /* Tabs */
-    .tabs {
-      display: flex;
-      gap: 1px;
-      background: var(--border);
-      padding: 1px;
-    }
-    
-    .tab {
-      background: var(--bg-panel);
-      color: var(--text-muted);
-      border: none;
-      padding: 0.4rem 0.75rem;
-      font-family: inherit;
-      font-size: 10px;
-      cursor: pointer;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    
-    .tab:hover {
-      color: var(--text);
-    }
-    
-    .tab.active {
-      background: var(--bg);
-      color: var(--orange);
-    }
-    
-    /* Filters */
-    .filters {
-      display: flex;
-      gap: 1rem;
-      padding: 0.5rem;
-      background: var(--bg-panel);
-      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
     }
     
     .filter-group {
@@ -388,107 +115,253 @@
       color: var(--text-muted);
       font-size: 10px;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     
-    select {
+    select, input[type="text"] {
       background: var(--bg);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 0.3rem 0.5rem;
+      padding: 0.4rem 0.6rem;
       font-family: inherit;
       font-size: 11px;
+      border-radius: 2px;
     }
     
-    select:focus {
-      outline: 1px solid var(--orange);
+    select:focus, input:focus {
+      outline: none;
+      border-color: var(--orange);
     }
     
-    /* Positions list */
-    .positions {
-      margin-top: 0.5rem;
-      padding-top: 0.5rem;
-      border-top: 1px solid var(--border);
+    input[type="text"] {
+      width: 180px;
     }
     
-    .positions-title {
-      color: var(--text-muted);
-      font-size: 9px;
+    .btn {
+      background: var(--bg);
+      color: var(--orange);
+      border: 1px solid var(--orange);
+      padding: 0.4rem 0.75rem;
+      font-family: inherit;
+      font-size: 10px;
+      cursor: pointer;
       text-transform: uppercase;
-      margin-bottom: 0.25rem;
+      letter-spacing: 0.5px;
+      border-radius: 2px;
     }
     
-    .position-row {
+    .btn:hover {
+      background: var(--orange);
+      color: black;
+    }
+    
+    .btn.active {
+      background: var(--orange);
+      color: black;
+    }
+    
+    .filter-spacer {
+      flex: 1;
+    }
+    
+    .live-indicator {
       display: flex;
-      justify-content: space-between;
-      padding: 0.2rem 0;
-      font-size: 11px;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-muted);
+      font-size: 10px;
     }
     
-    .position-market {
-      color: var(--text-dim);
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    
+    /* Main Table */
+    main {
+      padding: 0;
+    }
+    
+    .table-container {
+      overflow-x: auto;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    
+    th {
+      background: var(--bg-panel);
+      color: var(--orange);
+      font-weight: 500;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0.6rem 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    
+    th:hover {
+      background: var(--bg-row-hover);
+    }
+    
+    th.sorted {
+      color: var(--text);
+    }
+    
+    th.sorted::after {
+      content: ' ▼';
+      font-size: 8px;
+    }
+    
+    th.sorted.asc::after {
+      content: ' ▲';
+    }
+    
+    th.col-num {
+      text-align: right;
+    }
+    
+    td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    
+    tr:hover td {
+      background: var(--bg-row-hover);
+    }
+    
+    tr.edge-row td {
+      background: var(--bg-row-edge);
+    }
+    
+    tr.edge-row:hover td {
+      background: rgba(255,102,0,0.12);
+    }
+    
+    .col-num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    
+    .positive { color: var(--green); }
+    .negative { color: var(--red); }
+    .dim { color: var(--text-dim); }
+    .highlight { color: var(--orange); }
+    
+    .trader-link {
+      color: var(--text);
+      text-decoration: none;
+    }
+    
+    .trader-link:hover {
+      color: var(--orange);
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 2px 5px;
+      font-size: 9px;
+      font-weight: bold;
+      border-radius: 2px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    
+    .badge-edge {
+      background: var(--orange);
+      color: black;
+    }
+    
+    .badge-buy {
+      background: var(--green);
+      color: black;
+    }
+    
+    .badge-sell {
+      background: var(--red);
+      color: white;
+    }
+    
+    .side-cell {
+      font-weight: bold;
+    }
+    
+    .market-cell {
+      max-width: 300px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+    
+    .outcome-cell {
       max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     
-    /* Edge trader card */
-    .edge-card {
-      background: var(--bg-panel);
-      border: 1px solid var(--border);
-      padding: 0.75rem;
-      margin-bottom: 0.5rem;
-    }
-    
-    .edge-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.5rem;
-    }
-    
-    .edge-rank {
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
       color: var(--text-muted);
-      margin-right: 0.5rem;
     }
     
-    .edge-score {
-      background: var(--orange);
-      color: black;
-      padding: 0.15rem 0.4rem;
-      font-size: 10px;
-      font-weight: bold;
+    .empty-state h2 {
+      color: var(--text-dim);
+      font-size: 16px;
+      margin-bottom: 0.5rem;
     }
     
-    .edge-stats {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
+    /* Stats row */
+    .stats-row {
+      display: flex;
+      gap: 2rem;
+      padding: 0.75rem 1.5rem;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+    }
+    
+    .stat-item {
+      display: flex;
       gap: 0.5rem;
     }
     
-    .edge-stat label {
-      display: block;
+    .stat-item label {
       color: var(--text-muted);
-      font-size: 9px;
-      text-transform: uppercase;
     }
     
-    .edge-stat .value {
+    .stat-item .value {
       font-weight: bold;
-    }
-    
-    /* Loading state */
-    .loading, .empty {
-      color: var(--text-muted);
-      text-align: center;
-      padding: 2rem;
-      font-size: 11px;
     }
     
     /* Scrollbar */
     ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
+      width: 8px;
+      height: 8px;
     }
     
     ::-webkit-scrollbar-track {
@@ -497,147 +370,46 @@
     
     ::-webkit-scrollbar-thumb {
       background: var(--border);
+      border-radius: 4px;
     }
     
     ::-webkit-scrollbar-thumb:hover {
       background: var(--text-muted);
     }
     
-    /* Ticker animation */
-    @keyframes blink {
-      0%, 50% { opacity: 1; }
-      51%, 100% { opacity: 0.3; }
-    }
-    
-    .live-dot {
-      display: inline-block;
-      width: 6px;
-      height: 6px;
-      background: var(--green);
-      border-radius: 50%;
-      margin-right: 0.5rem;
-      animation: blink 1s infinite;
-    }
-    
-    /* Mobile Responsive */
+    /* Mobile */
     @media (max-width: 768px) {
-      body {
-        font-size: 11px;
-      }
-      
       header {
         flex-direction: column;
-        gap: 0.5rem;
-        padding: 0.5rem;
-      }
-      
-      .logo-text {
-        display: none;
+        gap: 0.75rem;
+        padding: 0.5rem 1rem;
       }
       
       .header-stats {
         gap: 1rem;
-        font-size: 10px;
       }
       
-      main {
-        display: flex;
-        flex-direction: column;
-        height: auto;
-        min-height: calc(100vh - 80px);
+      .filter-bar {
+        padding: 0.5rem 1rem;
+        gap: 0.75rem;
       }
       
-      .panel {
-        min-height: 300px;
-      }
-      
-      .panel.full {
-        max-height: none;
-        min-height: 50vh;
-      }
-      
-      .panel-content {
-        overflow-x: auto;
-      }
-      
-      /* Scrollable table wrapper */
-      table {
-        min-width: 800px;
-        font-size: 11px;
-      }
-      
-      th, td {
-        padding: 0.4rem;
-        white-space: nowrap;
-      }
-      
-      .col-rank {
-        width: 30px;
-      }
-      
-      /* Activity feed mobile */
-      .activity-item {
-        grid-template-columns: 40px 1fr auto;
-        gap: 0.5rem;
-        padding: 0.4rem;
-      }
-      
-      .activity-time {
-        font-size: 9px;
-      }
-      
-      .activity-market {
-        font-size: 10px;
-      }
-      
-      /* Signal cards mobile */
-      .signal-details {
-        grid-template-columns: repeat(2, 1fr);
-      }
-      
-      .signal-market {
-        font-size: 11px;
-      }
-      
-      /* Filters */
-      .panel-header {
-        flex-direction: column;
-        gap: 0.5rem;
-        align-items: flex-start;
-      }
-      
-      .filters {
-        width: 100%;
-        justify-content: flex-start;
-      }
-      
-      select {
-        font-size: 12px;
-        padding: 0.4rem;
-      }
-    }
-    
-    /* Extra small screens */
-    @media (max-width: 480px) {
-      .header-stats {
-        flex-wrap: wrap;
-        justify-content: center;
-      }
-      
-      .header-stat label {
+      .filter-group label {
         display: none;
       }
       
+      input[type="text"] {
+        width: 120px;
+      }
+      
       table {
-        min-width: 600px;
-        font-size: 10px;
+        font-size: 11px;
       }
       
       th, td {
-        padding: 0.3rem;
+        padding: 0.4rem 0.5rem;
       }
       
-      /* Hide less important columns on very small screens */
       .hide-mobile {
         display: none;
       }
@@ -648,434 +420,322 @@
   <header>
     <div class="logo">
       <div class="logo-box">PM</div>
-      <div class="logo-text">Polymarket Screener</div>
+      <div class="logo-text">Whale Screener</div>
     </div>
     <div class="header-stats">
       <div class="header-stat">
-        <label>TOP 20 PNL</label>
-        <span class="value" id="header-pnl">-</span>
+        <label>Trades</label>
+        <span class="value" id="stat-count">-</span>
       </div>
       <div class="header-stat">
-        <label>TODAY</label>
-        <span class="value" id="header-today">-</span>
+        <label>Buy Volume</label>
+        <span class="value positive" id="stat-buy-vol">-</span>
       </div>
       <div class="header-stat">
-        <label>UPDATED</label>
-        <span class="value" id="header-updated">-</span>
+        <label>Sell Volume</label>
+        <span class="value negative" id="stat-sell-vol">-</span>
       </div>
-    </div>
-    <div class="header-actions">
-      <button class="btn" onclick="refreshData()">REFRESH</button>
+      <div class="header-stat">
+        <label>Updated</label>
+        <span class="value" id="stat-updated">-</span>
+      </div>
     </div>
   </header>
   
+  <div class="filter-bar">
+    <div class="filter-group">
+      <label>Search</label>
+      <input type="text" id="filter-search" placeholder="Trader or market..." oninput="renderTable()">
+    </div>
+    
+    <div class="filter-group">
+      <label>Side</label>
+      <select id="filter-side" onchange="renderTable()">
+        <option value="all">All</option>
+        <option value="BUY">Buy</option>
+        <option value="SELL">Sell</option>
+      </select>
+    </div>
+    
+    <div class="filter-group">
+      <label>Trader</label>
+      <select id="filter-edge" onchange="renderTable()">
+        <option value="all">All Traders</option>
+        <option value="edge">Edge Only</option>
+      </select>
+    </div>
+    
+    <div class="filter-group">
+      <label>Min Size</label>
+      <select id="filter-size" onchange="renderTable()">
+        <option value="0">Any</option>
+        <option value="10000">$10K+</option>
+        <option value="25000">$25K+</option>
+        <option value="50000">$50K+</option>
+        <option value="100000">$100K+</option>
+      </select>
+    </div>
+    
+    <div class="filter-spacer"></div>
+    
+    <div class="live-indicator">
+      <div class="live-dot"></div>
+      <span>LIVE</span>
+    </div>
+    
+    <button class="btn" onclick="refreshData()">Refresh</button>
+  </div>
+  
+  <div class="stats-row">
+    <div class="stat-item">
+      <label>Showing:</label>
+      <span class="value" id="stat-showing">-</span>
+    </div>
+    <div class="stat-item">
+      <label>Edge Trades:</label>
+      <span class="value highlight" id="stat-edge">-</span>
+    </div>
+    <div class="stat-item">
+      <label>Avg Size:</label>
+      <span class="value" id="stat-avg-size">-</span>
+    </div>
+  </div>
+  
   <main>
-    <!-- Main Screener Panel - Full Width -->
-    <div class="panel full">
-      <div class="panel-header">
-        <span class="panel-title">📊 Trader Screener</span>
-        <div class="filters" style="background: transparent; padding: 0; border: none;">
-          <select id="period-filter" onchange="renderLeaderboard()">
-            <option value="all">ALL TIME</option>
-            <option value="month">MONTH</option>
-            <option value="week">WEEK</option>
-            <option value="day">TODAY</option>
-          </select>
-          <select id="sort-filter" onchange="renderLeaderboard()">
-            <option value="pnl">BY PNL</option>
-            <option value="vol">BY VOLUME</option>
-            <option value="efficiency">BY EFFICIENCY</option>
-            <option value="winrate">BY WIN RATE</option>
-            <option value="edge">BY EDGE SCORE</option>
-          </select>
-        </div>
-      </div>
-      <div class="panel-content">
-        <table id="leaderboard-table">
-          <thead>
-            <tr>
-              <th class="col-rank">#</th>
-              <th>Trader</th>
-              <th class="col-num">PnL</th>
-              <th class="col-num">Volume</th>
-              <th class="col-num">Eff%</th>
-              <th class="col-num">Win%</th>
-              <th class="col-num hide-mobile">Trades</th>
-              <th class="col-num hide-mobile">Avg W</th>
-              <th class="col-num hide-mobile">Avg L</th>
-              <th class="col-num">PF</th>
-              <th class="col-num">Edge</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
-    
-    <!-- Edge Watchlist Panel -->
-    <div class="panel">
-      <div class="panel-header">
-        <span class="panel-title">🎯 Top Edge Traders</span>
-        <span class="panel-subtitle">Highest edge scores</span>
-      </div>
-      <div class="panel-content" id="edge-watchlist">
-        <div class="loading">Loading...</div>
-      </div>
-    </div>
-    
-    <!-- Whale Activity Panel - Full Width Screener -->
-    <div class="panel whale-full">
-      <div class="panel-header">
-        <span class="panel-title"><span class="live-dot"></span>🐋 Whale Activity</span>
-        <div class="filters" style="background: transparent; padding: 0; border: none;">
-          <select id="whale-side-filter" onchange="renderWhaleActivity()">
-            <option value="all">ALL SIDES</option>
-            <option value="BUY">BUYS ONLY</option>
-            <option value="SELL">SELLS ONLY</option>
-          </select>
-          <select id="whale-edge-filter" onchange="renderWhaleActivity()">
-            <option value="all">ALL TRADERS</option>
-            <option value="edge">EDGE ONLY</option>
-          </select>
-          <select id="whale-sort-filter" onchange="renderWhaleActivity()">
-            <option value="time">BY TIME</option>
-            <option value="size">BY SIZE</option>
-          </select>
-        </div>
-      </div>
-      <div class="panel-content">
-        <table id="whale-table">
-          <thead>
-            <tr>
-              <th style="width: 50px;">Time</th>
-              <th>Trader</th>
-              <th style="width: 60px;">Side</th>
-              <th>Outcome</th>
-              <th class="hide-mobile">Market</th>
-              <th class="col-num" style="width: 60px;">Price</th>
-              <th class="col-num" style="width: 80px;">Size</th>
-            </tr>
-          </thead>
-          <tbody id="whale-list"></tbody>
-        </table>
-      </div>
-    </div>
-    
-    <!-- Copy Signals Panel -->
-    <div class="panel">
-      <div class="panel-header">
-        <span class="panel-title">📡 Copy Signals</span>
-        <span class="panel-subtitle">Consensus positions</span>
-      </div>
-      <div class="panel-content" id="signals-list">
-        <div class="loading">Loading...</div>
-      </div>
+    <div class="table-container">
+      <table id="whale-table">
+        <thead>
+          <tr>
+            <th data-sort="timestamp" class="sorted">Time</th>
+            <th data-sort="userName">Trader</th>
+            <th data-sort="side">Side</th>
+            <th data-sort="outcome">Outcome</th>
+            <th data-sort="market" class="hide-mobile">Market</th>
+            <th data-sort="price" class="col-num">Price</th>
+            <th data-sort="size" class="col-num">Size</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <tr>
+            <td colspan="7" class="empty-state">
+              <h2>Loading whale activity...</h2>
+              <p>Fetching latest trades from top Polymarket traders</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </main>
   
   <script>
-    let data = {
-      leaderboard: null,
-      detailed: null,
-      signals: null,
-      whaleActivity: null,
-      edgeTraders: null,
-      edgeWatchlist: null
-    };
+    let rawData = [];
+    let sortColumn = 'timestamp';
+    let sortAsc = false;
     
-    function formatMoney(n, compact = false) {
+    function formatMoney(n, compact = true) {
       if (n == null) return '-';
       const abs = Math.abs(n);
-      const sign = n >= 0 ? '+' : '-';
       if (compact && abs >= 1000000) {
-        return sign + '$' + (abs / 1000000).toFixed(1) + 'M';
+        return '$' + (abs / 1000000).toFixed(2) + 'M';
       }
       if (compact && abs >= 1000) {
-        return sign + '$' + (abs / 1000).toFixed(0) + 'K';
+        return '$' + (abs / 1000).toFixed(1) + 'K';
       }
-      return sign + '$' + abs.toLocaleString('en-US', { maximumFractionDigits: 0 });
-    }
-    
-    function formatPct(n) {
-      if (n == null) return '-';
-      return (n * 100).toFixed(1) + '%';
+      return '$' + abs.toLocaleString('en-US', { maximumFractionDigits: 0 });
     }
     
     function timeAgo(timestamp) {
-      // Handle Unix timestamps in seconds (convert to ms)
       let ts = timestamp;
       if (typeof ts === 'number' && ts < 10000000000) {
         ts = ts * 1000;
       }
       const seconds = Math.floor((Date.now() - new Date(ts)) / 1000);
       if (seconds < 0) return 'now';
-      if (seconds < 60) return seconds + 's';
-      if (seconds < 3600) return Math.floor(seconds / 60) + 'm';
-      if (seconds < 86400) return Math.floor(seconds / 3600) + 'h';
-      return Math.floor(seconds / 86400) + 'd';
+      if (seconds < 60) return seconds + 's ago';
+      if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+      if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+      return Math.floor(seconds / 86400) + 'd ago';
+    }
+    
+    function getTimestamp(item) {
+      const ts = item.timestamp;
+      return (typeof ts === 'number' && ts < 10000000000) ? ts * 1000 : new Date(ts).getTime();
     }
     
     async function fetchData() {
       try {
-        const [leaderboard, detailed, signals, whaleActivity, edgeTraders, edgeWatchlist] = await Promise.all([
-          fetch('/api/leaderboard').then(r => r.json()),
-          fetch('/api/top-detailed').then(r => r.json()),
-          fetch('/api/signals').then(r => r.json()),
-          fetch('/api/whale-activity').then(r => r.json()),
-          fetch('/api/edge-traders').then(r => r.json()).catch(() => ({ traders: [] })),
-          fetch('/api/edge-watchlist').then(r => r.json()).catch(() => ({ traders: [] }))
-        ]);
-        
-        data = { leaderboard, detailed, signals, whaleActivity, edgeTraders, edgeWatchlist };
-        renderAll();
+        const res = await fetch('/api/whale-activity');
+        rawData = await res.json();
+        renderTable();
+        updateStats();
       } catch (err) {
-        console.error('Failed to fetch data:', err);
-      }
-    }
-    
-    function renderHeader() {
-      if (!data.leaderboard) return;
-      
-      const allPnl = data.leaderboard.all?.byPnl || [];
-      const dayPnl = data.leaderboard.day?.byPnl || [];
-      
-      const totalPnl = allPnl.slice(0, 20).reduce((s, t) => s + (t.pnl || 0), 0);
-      const todayPnl = dayPnl.slice(0, 20).reduce((s, t) => s + (t.pnl || 0), 0);
-      
-      document.getElementById('header-pnl').textContent = formatMoney(totalPnl, true);
-      document.getElementById('header-today').textContent = formatMoney(todayPnl, true);
-      document.getElementById('header-today').className = 'value ' + (todayPnl >= 0 ? 'positive' : 'negative');
-      document.getElementById('header-updated').textContent = data.leaderboard.all?.fetchedAt 
-        ? timeAgo(data.leaderboard.all.fetchedAt) + ' ago'
-        : '-';
-    }
-    
-    function renderLeaderboard() {
-      const tbody = document.querySelector('#leaderboard-table tbody');
-      const period = document.getElementById('period-filter').value;
-      const sort = document.getElementById('sort-filter').value;
-      
-      if (!data.leaderboard || !data.leaderboard[period]) {
-        tbody.innerHTML = '<tr><td colspan="11" class="empty">No data</td></tr>';
-        return;
-      }
-      
-      // Merge leaderboard with detailed stats and edge data
-      let traders = data.leaderboard[period].byPnl.map(t => {
-        const detail = data.detailed?.find(d => d.proxyWallet === t.proxyWallet);
-        const edge = data.edgeTraders?.traders?.find(e => e.wallet === t.proxyWallet);
-        return {
-          ...t,
-          ...detail,
-          // Merge edge stats at root level (API returns flat structure)
-          winRate: edge?.winRate ? edge.winRate / 100 : (detail?.winRate || null),
-          totalTrades: edge?.totalTrades || detail?.totalTrades || null,
-          avgWin: edge?.avgWin || detail?.avgWin || null,
-          avgLoss: edge?.avgLoss || detail?.avgLoss || null,
-          profitFactor: edge?.profitFactor || detail?.profitFactor || null,
-          edgeScore: edge?.edgeScore || null,
-          efficiency: t.vol > 0 ? (t.pnl / t.vol) : 0,
-          stats: detail || {}
-        };
-      });
-      
-      // Sort based on selection
-      switch(sort) {
-        case 'vol':
-          traders.sort((a, b) => (b.vol || 0) - (a.vol || 0));
-          break;
-        case 'efficiency':
-          traders.sort((a, b) => b.efficiency - a.efficiency);
-          break;
-        case 'winrate':
-          traders.sort((a, b) => (b.winRate || 0) - (a.winRate || 0));
-          break;
-        case 'edge':
-          traders.sort((a, b) => (b.edgeScore || 0) - (a.edgeScore || 0));
-          break;
-        default:
-          traders.sort((a, b) => (b.pnl || 0) - (a.pnl || 0));
-      }
-      
-      tbody.innerHTML = traders.slice(0, 50).map((t, i) => {
-        const eff = t.efficiency * 100;
-        const wr = t.winRate ? t.winRate * 100 : null;
-        const trades = t.totalTrades || '-';
-        const avgWin = t.avgWin || null;
-        const avgLoss = t.avgLoss || null;
-        const pf = t.profitFactor || null;
-        
-        return `
-          <tr>
-            <td class="col-rank">${i + 1}</td>
-            <td>
-              <a class="trader-link" href="https://polymarket.com/profile/${t.proxyWallet}" target="_blank">
-                ${t.userName}
-              </a>
-            </td>
-            <td class="col-num ${t.pnl >= 0 ? 'positive' : 'negative'}">${formatMoney(t.pnl, true)}</td>
-            <td class="col-num dim">${formatMoney(t.vol, true)}</td>
-            <td class="col-num ${eff > 20 ? 'positive' : eff > 0 ? '' : 'negative'}">${eff.toFixed(1)}%</td>
-            <td class="col-num ${wr > 60 ? 'positive' : ''}">${wr ? wr.toFixed(1) + '%' : '-'}</td>
-            <td class="col-num hide-mobile">${trades}</td>
-            <td class="col-num hide-mobile positive">${avgWin ? formatMoney(avgWin, true) : '-'}</td>
-            <td class="col-num hide-mobile negative">${avgLoss ? formatMoney(avgLoss, true) : '-'}</td>
-            <td class="col-num ${pf > 2 ? 'positive' : ''}">${pf ? pf.toFixed(1) + 'x' : '-'}</td>
-            <td class="col-num highlight">${t.edgeScore || '-'}</td>
-          </tr>
+        console.error('Failed to fetch:', err);
+        document.getElementById('table-body').innerHTML = `
+          <tr><td colspan="7" class="empty-state">
+            <h2>Failed to load data</h2>
+            <p>${err.message}</p>
+          </td></tr>
         `;
-      }).join('');
+      }
     }
     
-    function renderEdgeTraders() {
-      // Edge data now merged into main screener table
-    }
-    
-    function renderWhaleActivity() {
-      const tbody = document.getElementById('whale-list');
+    function getFilteredData() {
+      const search = document.getElementById('filter-search').value.toLowerCase();
+      const side = document.getElementById('filter-side').value;
+      const edge = document.getElementById('filter-edge').value;
+      const minSize = parseInt(document.getElementById('filter-size').value) || 0;
       
-      if (!data.whaleActivity?.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty">Waiting for whale activity...</td></tr>';
-        return;
-      }
-      
-      const sideFilter = document.getElementById('whale-side-filter')?.value || 'all';
-      const edgeFilter = document.getElementById('whale-edge-filter')?.value || 'all';
-      const sortBy = document.getElementById('whale-sort-filter')?.value || 'time';
-      
-      // Filter
-      let filtered = [...data.whaleActivity];
-      if (sideFilter !== 'all') {
-        filtered = filtered.filter(a => a.side === sideFilter);
-      }
-      if (edgeFilter === 'edge') {
-        filtered = filtered.filter(a => a.isEdgeTrader || a.isCopyCandidate);
-      }
+      let filtered = rawData.filter(item => {
+        if (side !== 'all' && item.side !== side) return false;
+        if (edge === 'edge' && !item.isEdgeTrader && !item.isCopyCandidate) return false;
+        if (item.size < minSize) return false;
+        if (search) {
+          const searchIn = (item.userName + ' ' + item.market + ' ' + item.outcome).toLowerCase();
+          if (!searchIn.includes(search)) return false;
+        }
+        return true;
+      });
       
       // Sort
       filtered.sort((a, b) => {
-        if (sortBy === 'size') {
-          return (b.size || 0) - (a.size || 0);
+        let aVal, bVal;
+        
+        switch (sortColumn) {
+          case 'timestamp':
+            aVal = getTimestamp(a);
+            bVal = getTimestamp(b);
+            break;
+          case 'size':
+            aVal = a.size || 0;
+            bVal = b.size || 0;
+            break;
+          case 'price':
+            aVal = a.price || 0;
+            bVal = b.price || 0;
+            break;
+          case 'userName':
+            aVal = (a.userName || '').toLowerCase();
+            bVal = (b.userName || '').toLowerCase();
+            break;
+          case 'side':
+            aVal = a.side || '';
+            bVal = b.side || '';
+            break;
+          case 'outcome':
+            aVal = (a.outcome || '').toLowerCase();
+            bVal = (b.outcome || '').toLowerCase();
+            break;
+          case 'market':
+            aVal = (a.market || '').toLowerCase();
+            bVal = (b.market || '').toLowerCase();
+            break;
+          default:
+            aVal = getTimestamp(a);
+            bVal = getTimestamp(b);
         }
-        // Default: by time
-        const tsA = typeof a.timestamp === 'number' && a.timestamp < 10000000000 ? a.timestamp * 1000 : new Date(a.timestamp).getTime();
-        const tsB = typeof b.timestamp === 'number' && b.timestamp < 10000000000 ? b.timestamp * 1000 : new Date(b.timestamp).getTime();
-        return tsB - tsA;
+        
+        if (typeof aVal === 'string') {
+          return sortAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+        }
+        return sortAsc ? aVal - bVal : bVal - aVal;
       });
       
-      tbody.innerHTML = filtered.slice(0, 30).map(a => {
-        const edgeBadge = (a.isEdgeTrader || a.isCopyCandidate) 
-          ? '<span style="background: var(--orange); color: black; padding: 1px 4px; font-size: 9px; margin-left: 4px; vertical-align: middle;">EDGE</span>' 
-          : '';
-        const priceDisplay = a.price ? (a.price * 100).toFixed(1) + '¢' : '-';
-        const marketShort = a.market?.length > 40 ? a.market.slice(0, 40) + '...' : (a.market || '-');
-        const outcomeShort = a.outcome?.length > 30 ? a.outcome.slice(0, 30) + '...' : (a.outcome || '-');
+      return filtered;
+    }
+    
+    function renderTable() {
+      const tbody = document.getElementById('table-body');
+      const filtered = getFilteredData();
+      
+      // Update sort indicators
+      document.querySelectorAll('th[data-sort]').forEach(th => {
+        th.classList.remove('sorted', 'asc');
+        if (th.dataset.sort === sortColumn) {
+          th.classList.add('sorted');
+          if (sortAsc) th.classList.add('asc');
+        }
+      });
+      
+      if (!filtered.length) {
+        tbody.innerHTML = `
+          <tr><td colspan="7" class="empty-state">
+            <h2>No trades found</h2>
+            <p>Try adjusting your filters</p>
+          </td></tr>
+        `;
+        updateFilteredStats(filtered);
+        return;
+      }
+      
+      tbody.innerHTML = filtered.map(item => {
+        const isEdge = item.isEdgeTrader || item.isCopyCandidate;
+        const priceDisplay = item.price ? (item.price * 100).toFixed(1) + '¢' : '-';
         
         return `
-          <tr ${(a.isEdgeTrader || a.isCopyCandidate) ? 'style="background: rgba(255,102,0,0.08);"' : ''}>
-            <td class="dim">${timeAgo(a.timestamp)}</td>
+          <tr class="${isEdge ? 'edge-row' : ''}">
+            <td class="dim">${timeAgo(item.timestamp)}</td>
             <td>
-              <a class="trader-link" href="https://polymarket.com/profile/${a.wallet}" target="_blank">
-                ${a.userName}
-              </a>${edgeBadge}
+              <a class="trader-link" href="https://polymarket.com/profile/${item.wallet}" target="_blank">
+                ${item.userName || 'Unknown'}
+              </a>
+              ${isEdge ? '<span class="badge badge-edge">EDGE</span>' : ''}
             </td>
-            <td class="${a.side === 'BUY' ? 'positive' : 'negative'}" style="font-weight: bold;">${a.side}</td>
-            <td>${outcomeShort}</td>
-            <td class="dim hide-mobile" title="${a.market || ''}">${marketShort}</td>
+            <td class="side-cell ${item.side === 'BUY' ? 'positive' : 'negative'}">
+              ${item.side}
+            </td>
+            <td class="outcome-cell" title="${item.outcome || ''}">${item.outcome || '-'}</td>
+            <td class="market-cell dim hide-mobile" title="${item.market || ''}">${item.market || '-'}</td>
             <td class="col-num">${priceDisplay}</td>
-            <td class="col-num ${a.side === 'BUY' ? 'positive' : 'negative'}" style="font-weight: bold;">${formatMoney(a.size, true)}</td>
+            <td class="col-num ${item.side === 'BUY' ? 'positive' : 'negative'}" style="font-weight: bold;">
+              ${formatMoney(item.size)}
+            </td>
           </tr>
         `;
       }).join('');
+      
+      updateFilteredStats(filtered);
     }
     
-    function renderSignals() {
-      const container = document.getElementById('signals-list');
+    function updateStats() {
+      if (!rawData.length) return;
       
-      if (!data.signals?.length) {
-        container.innerHTML = '<div class="empty">Run npm run copy</div>';
-        return;
-      }
+      const buyVol = rawData.filter(t => t.side === 'BUY').reduce((s, t) => s + (t.size || 0), 0);
+      const sellVol = rawData.filter(t => t.side === 'SELL').reduce((s, t) => s + (t.size || 0), 0);
       
-      container.innerHTML = data.signals.slice(0, 10).map(s => {
-        const conf = s.confidence >= 0.8 ? 'high' : s.confidence >= 0.6 ? 'medium' : 'low';
-        return `
-          <div class="signal-item">
-            <div class="signal-header">
-              <span class="signal-market">${s.market?.slice(0, 40)}${s.market?.length > 40 ? '...' : ''}</span>
-              <span class="signal-confidence ${conf}">${(s.confidence * 100).toFixed(0)}%</span>
-            </div>
-            <div>
-              <strong class="${s.side === 'LONG' ? 'positive' : 'negative'}">${s.side}</strong>
-              ${s.outcome}
-            </div>
-            <div class="signal-details">
-              <div class="signal-detail">
-                <label>Size</label>
-                <div>${formatMoney(s.totalSize, true)}</div>
-              </div>
-              <div class="signal-detail">
-                <label>Price</label>
-                <div>${(s.avgPrice * 100).toFixed(1)}¢</div>
-              </div>
-              <div class="signal-detail">
-                <label>Traders</label>
-                <div>${s.traders?.length || 0}</div>
-              </div>
-              <div class="signal-detail">
-                <label>Time</label>
-                <div>${timeAgo(s.timestamp)}</div>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
+      document.getElementById('stat-count').textContent = rawData.length;
+      document.getElementById('stat-buy-vol').textContent = formatMoney(buyVol);
+      document.getElementById('stat-sell-vol').textContent = formatMoney(sellVol);
+      document.getElementById('stat-updated').textContent = 'now';
     }
     
-    function renderEdgeWatchlist() {
-      const container = document.getElementById('edge-watchlist');
+    function updateFilteredStats(filtered) {
+      const edgeCount = filtered.filter(t => t.isEdgeTrader || t.isCopyCandidate).length;
+      const avgSize = filtered.length > 0 
+        ? filtered.reduce((s, t) => s + (t.size || 0), 0) / filtered.length 
+        : 0;
       
-      // Use live edge traders data (top performers by edge score)
-      const traders = data.edgeTraders?.traders || [];
-      
-      if (!traders.length) {
-        container.innerHTML = '<div class="empty">Loading edge traders...</div>';
-        return;
-      }
-      
-      // Show top 10 by edge score
-      container.innerHTML = traders.slice(0, 10).map(t => `
-        <div class="activity-item" style="border-left: 2px solid var(--orange);">
-          <div class="activity-time">
-            <span class="edge-score" style="font-size: 10px;">${t.edgeScore}</span>
-          </div>
-          <div class="activity-main">
-            <a class="trader-link activity-trader" href="https://polymarket.com/profile/${t.wallet}" target="_blank">
-              ${t.userName}
-            </a>
-            <div style="font-size: 10px; color: var(--text-muted);">
-              ${t.totalTrades} trades · ${t.winRate?.toFixed(1)}% WR · ${t.efficiency?.toFixed(1)}% eff
-            </div>
-          </div>
-          <div class="activity-size positive">
-            ${formatMoney(t.pnl, true)}
-          </div>
-        </div>
-      `).join('');
-    }
-    
-    function renderAll() {
-      renderHeader();
-      renderLeaderboard();
-      renderEdgeTraders();
-      renderEdgeWatchlist();
-      renderWhaleActivity();
-      renderSignals();
+      document.getElementById('stat-showing').textContent = filtered.length + ' trades';
+      document.getElementById('stat-edge').textContent = edgeCount;
+      document.getElementById('stat-avg-size').textContent = formatMoney(avgSize);
     }
     
     function refreshData() {
       fetchData();
     }
+    
+    // Column sorting
+    document.querySelectorAll('th[data-sort]').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.dataset.sort;
+        if (sortColumn === col) {
+          sortAsc = !sortAsc;
+        } else {
+          sortColumn = col;
+          sortAsc = false;
+        }
+        renderTable();
+      });
+    });
     
     // Initial load
     fetchData();
