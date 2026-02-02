@@ -229,12 +229,13 @@
     
     /* Activity feed */
     .activity-item {
-      padding: 0.5rem;
+      padding: 0.25rem 0.5rem;
       border-bottom: 1px solid #222;
       display: grid;
-      grid-template-columns: 60px 1fr auto;
-      gap: 0.75rem;
-      align-items: start;
+      grid-template-columns: 28px 1fr auto;
+      gap: 0.4rem;
+      align-items: center;
+      line-height: 1.2;
     }
     
     .activity-item:hover {
@@ -243,11 +244,12 @@
     
     .activity-time {
       color: var(--text-muted);
-      font-size: 10px;
+      font-size: 9px;
     }
     
     .activity-main {
       min-width: 0;
+      font-size: 11px;
     }
     
     .activity-trader {
@@ -256,7 +258,7 @@
     
     .activity-market {
       color: var(--text-dim);
-      font-size: 11px;
+      font-size: 10px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -265,6 +267,12 @@
     .activity-size {
       text-align: right;
       font-weight: bold;
+      font-size: 11px;
+    }
+    
+    /* No-scroll whale panel */
+    #whale-list {
+      overflow: hidden !important;
     }
     
     /* Signal cards */
@@ -892,7 +900,7 @@
         return tsB - tsA;
       });
       
-      container.innerHTML = sorted.slice(0, 30).map(a => {
+      container.innerHTML = sorted.slice(0, 20).map(a => {
         const edgeBadge = a.isEdgeTrader ? '<span style="background: var(--orange); color: black; padding: 0 4px; font-size: 9px; margin-left: 4px;">EDGE</span>' : '';
         return `
         <div class="activity-item" ${a.isEdgeTrader ? 'style="border-left: 2px solid var(--orange);"' : ''}>
