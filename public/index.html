@@ -125,7 +125,25 @@
     /* Whale panel full width */
     .panel.whale-full {
       grid-column: span 2;
-      min-height: 45vh;
+      min-height: 50vh;
+    }
+    
+    /* Whale table specific */
+    #whale-table {
+      font-size: 12px;
+    }
+    
+    #whale-table td {
+      padding: 0.4rem 0.5rem;
+      white-space: nowrap;
+    }
+    
+    #whale-table td:nth-child(4),
+    #whale-table td:nth-child(5) {
+      white-space: normal;
+      max-width: 250px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
     /* Panel styling */
@@ -274,12 +292,6 @@
       text-align: right;
       font-weight: bold;
       font-size: 11px;
-    }
-    
-    /* Whale panel content */
-    #whale-list {
-      display: flex;
-      flex-direction: column;
     }
     
     /* Signal cards */
@@ -711,14 +723,41 @@
       </div>
     </div>
     
-    <!-- Whale Activity Panel - Full Width -->
+    <!-- Whale Activity Panel - Full Width Screener -->
     <div class="panel whale-full">
       <div class="panel-header">
         <span class="panel-title"><span class="live-dot"></span>🐋 Whale Activity</span>
-        <span class="panel-subtitle">Live feed</span>
+        <div class="filters" style="background: transparent; padding: 0; border: none;">
+          <select id="whale-side-filter" onchange="renderWhaleActivity()">
+            <option value="all">ALL SIDES</option>
+            <option value="BUY">BUYS ONLY</option>
+            <option value="SELL">SELLS ONLY</option>
+          </select>
+          <select id="whale-edge-filter" onchange="renderWhaleActivity()">
+            <option value="all">ALL TRADERS</option>
+            <option value="edge">EDGE ONLY</option>
+          </select>
+          <select id="whale-sort-filter" onchange="renderWhaleActivity()">
+            <option value="time">BY TIME</option>
+            <option value="size">BY SIZE</option>
+          </select>
+        </div>
       </div>
-      <div class="panel-content" id="whale-list">
-        <div class="loading">Waiting for activity...</div>
+      <div class="panel-content">
+        <table id="whale-table">
+          <thead>
+            <tr>
+              <th style="width: 50px;">Time</th>
+              <th>Trader</th>
+              <th style="width: 60px;">Side</th>
+              <th>Outcome</th>
+              <th class="hide-mobile">Market</th>
+              <th class="col-num" style="width: 60px;">Price</th>
+              <th class="col-num" style="width: 80px;">Size</th>
+            </tr>
+          </thead>
+          <tbody id="whale-list"></tbody>
+        </table>
       </div>
     </div>
     
@@ -893,36 +932,61 @@
     }
     
     function renderWhaleActivity() {
-      const container = document.getElementById('whale-list');
+      const tbody = document.getElementById('whale-list');
       
       if (!data.whaleActivity?.length) {
-        container.innerHTML = '<div class="empty">Run npm run whales:daemon</div>';
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">Waiting for whale activity...</td></tr>';
         return;
       }
       
-      // Sort by timestamp descending (most recent first)
-      const sorted = [...data.whaleActivity].sort((a, b) => {
+      const sideFilter = document.getElementById('whale-side-filter')?.value || 'all';
+      const edgeFilter = document.getElementById('whale-edge-filter')?.value || 'all';
+      const sortBy = document.getElementById('whale-sort-filter')?.value || 'time';
+      
+      // Filter
+      let filtered = [...data.whaleActivity];
+      if (sideFilter !== 'all') {
+        filtered = filtered.filter(a => a.side === sideFilter);
+      }
+      if (edgeFilter === 'edge') {
+        filtered = filtered.filter(a => a.isEdgeTrader || a.isCopyCandidate);
+      }
+      
+      // Sort
+      filtered.sort((a, b) => {
+        if (sortBy === 'size') {
+          return (b.size || 0) - (a.size || 0);
+        }
+        // Default: by time
         const tsA = typeof a.timestamp === 'number' && a.timestamp < 10000000000 ? a.timestamp * 1000 : new Date(a.timestamp).getTime();
         const tsB = typeof b.timestamp === 'number' && b.timestamp < 10000000000 ? b.timestamp * 1000 : new Date(b.timestamp).getTime();
         return tsB - tsA;
       });
       
-      container.innerHTML = sorted.slice(0, 20).map(a => {
-        const edgeBadge = a.isEdgeTrader ? '<span style="background: var(--orange); color: black; padding: 0 4px; font-size: 9px; margin-left: 4px;">EDGE</span>' : '';
+      tbody.innerHTML = filtered.slice(0, 30).map(a => {
+        const edgeBadge = (a.isEdgeTrader || a.isCopyCandidate) 
+          ? '<span style="background: var(--orange); color: black; padding: 1px 4px; font-size: 9px; margin-left: 4px; vertical-align: middle;">EDGE</span>' 
+          : '';
+        const priceDisplay = a.price ? (a.price * 100).toFixed(1) + '¢' : '-';
+        const marketShort = a.market?.length > 40 ? a.market.slice(0, 40) + '...' : (a.market || '-');
+        const outcomeShort = a.outcome?.length > 30 ? a.outcome.slice(0, 30) + '...' : (a.outcome || '-');
+        
         return `
-        <div class="activity-item" ${a.isEdgeTrader ? 'style="border-left: 2px solid var(--orange);"' : ''}>
-          <div class="activity-time">${timeAgo(a.timestamp)}</div>
-          <div class="activity-main">
-            <span class="activity-trader">${a.userName}</span>${edgeBadge}
-            <span class="${a.side === 'BUY' ? 'positive' : 'negative'}">${a.side}</span>
-            ${a.outcome}
-            <div class="activity-market">${a.market}</div>
-          </div>
-          <div class="activity-size ${a.side === 'BUY' ? 'positive' : 'negative'}">
-            ${formatMoney(a.size, true)}
-          </div>
-        </div>
-      `}).join('');
+          <tr ${(a.isEdgeTrader || a.isCopyCandidate) ? 'style="background: rgba(255,102,0,0.08);"' : ''}>
+            <td class="dim">${timeAgo(a.timestamp)}</td>
+            <td>
+              <a class="trader-link" href="https://polymarket.com/profile/${a.wallet}" target="_blank">
+                ${a.userName}
+              </a>${edgeBadge}
+            </td>
+            <td class="${a.side === 'BUY' ? 'positive' : 'negative'}" style="font-weight: bold;">${a.side}</td>
+            <td>${outcomeShort}</td>
+            <td class="dim hide-mobile" title="${a.market || ''}">${marketShort}</td>
+            <td class="col-num">${priceDisplay}</td>
+            <td class="col-num ${a.side === 'BUY' ? 'positive' : 'negative'}" style="font-weight: bold;">${formatMoney(a.size, true)}</td>
+          </tr>
+        `;
+      }).join('');
     }
     
     function renderSignals() {
