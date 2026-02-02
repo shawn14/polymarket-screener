@@ -11,8 +11,19 @@ A Bloomberg-style trader screener for Polymarket. Identifies high-edge traders, 
 - **Frontend:** Vanilla HTML/CSS/JS (Bloomberg terminal aesthetic)
 - **Backend:** Node.js (ES modules)
 - **Hosting:** Vercel (serverless functions + static)
+- **Whale Watcher:** GCP Cloud Run (24/7 monitoring)
 - **Alerts:** Telegram Bot (@Pmwhale_bot)
 - **Data:** Polymarket public APIs
+
+## GCP Cloud Run - Whale Watcher
+
+**URL:** https://polymarket-whale-watcher-377466082980.us-central1.run.app
+
+**Endpoints:**
+- `/` - Status (uptime, last check, trades found)
+- `/activity` - Recent whale trades with `isCopyCandidate` flag
+
+The Vercel dashboard proxies `/api/whale-activity` from this GCP endpoint, so both Telegram and the web dashboard show the same data.
 
 ## Key Features
 
