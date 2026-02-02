@@ -116,10 +116,16 @@
       background: var(--border);
     }
     
-    /* Screener takes 60% height */
+    /* Full-width panels */
     .panel.full {
       grid-column: span 2;
       max-height: 60vh;
+    }
+    
+    /* Whale panel full width */
+    .panel.whale-full {
+      grid-column: span 2;
+      min-height: 45vh;
     }
     
     /* Panel styling */
@@ -270,9 +276,10 @@
       font-size: 11px;
     }
     
-    /* No-scroll whale panel */
+    /* Whale panel content */
     #whale-list {
-      overflow: hidden !important;
+      display: flex;
+      flex-direction: column;
     }
     
     /* Signal cards */
@@ -704,8 +711,8 @@
       </div>
     </div>
     
-    <!-- Whale Activity Panel -->
-    <div class="panel">
+    <!-- Whale Activity Panel - Full Width -->
+    <div class="panel whale-full">
       <div class="panel-header">
         <span class="panel-title"><span class="live-dot"></span>🐋 Whale Activity</span>
         <span class="panel-subtitle">Live feed</span>
